@@ -62,17 +62,43 @@
 
 ### Workflow
 
-### Inputs
+### Screen Layout
 
-### Outputs
-
-### Business Rules
+### Fields
 
 ### Validation Rules
+
+### Auto Numbering
+
+### RC Selection
+
+### Item Search
+
+### Auto Fill Behaviour
+
+### GST Calculation
+
+### Amount Calculation
+
+### PO Status
+
+#### Pending
+
+#### Partial
+
+#### Completed
+
+#### Closed
+
+### Close Reasons
 
 ### Document Generation
 
 ### Reports
+
+### Audit Fields
+
+### Future Enhancements
 
 ## 7 Goods Receipt Module
 
