@@ -1,69 +1,137 @@
-# Software Requirements Specification
+# AIIMS Store ERP
 
-## System Name
+## 1 Introduction
 
-AIIMS Store ERP
+### Purpose
 
-## Purpose
+### Scope
 
-The system will support institutional store operations using Google Sheets as the controlled data layer and Google Apps Script as the automation, validation, reporting, and document generation layer.
+### Objectives
 
-## Phase 1 Objective
+### Definitions
 
-The Phase 1 objective is to create the production project architecture without implementing runtime functionality.
+### Abbreviations
 
-## User Roles
+### References
 
-The production system is expected to support role-aware workflows for:
+## 2 Existing Manual Workflow
 
-- Store administrators.
-- Purchase order operators.
-- Receipt entry operators.
-- Inspection officers.
-- Reporting and audit users.
+## 3 System Overview
 
-Role enforcement will be designed in a later phase.
+### Overview
 
-## Functional Areas
+### Technology
 
-The ERP architecture covers:
+### Google Sheets
 
-- Rate contract master management.
-- Purchase order entry.
-- Purchase order register maintenance.
-- Material receipt entry.
-- Receipt register maintenance.
-- Material inspection tracking.
-- Dashboard monitoring.
-- Operational reporting.
-- Google Docs based document generation.
-- System configuration management.
+### Google Apps Script
 
-## Non-Functional Requirements
+### Google Docs
 
-- Data integrity must be prioritized over convenience.
-- Register sheets must remain auditable.
-- User-facing operations must validate required data before persistence.
-- Error messages must be clear and safe for operational users.
-- System settings must be centralized.
-- Future scripts must be modular and maintainable.
-- Document generation must be traceable to source records.
+### Google Drive
 
-## Phase 1 Exclusions
+## 4 User Roles
 
-- No executable workflow logic.
-- No sample data.
-- No pseudo-code.
-- No placeholder functions.
-- No deployment automation.
+### Admin
 
-## Acceptance Criteria
+### Store Officer
 
-Phase 1 is complete when:
+### Receipt Clerk
 
-- The required folder structure exists.
-- All required Apps Script files exist.
-- The Apps Script manifest is valid.
-- All required documentation files exist.
-- All required Google Sheet modules are documented.
-- The repository is committed as `Version 0.1`.
+### Inspection Committee
+
+### Accounts
+
+### Purchase Section
+
+## 5 Master Modules
+
+### RC Master
+
+### Settings
+
+### Committee
+
+### Financial Year
+
+### Document Numbering
+
+## 6 Purchase Order Module
+
+### Purpose
+
+### Workflow
+
+### Inputs
+
+### Outputs
+
+### Business Rules
+
+### Validation Rules
+
+### Document Generation
+
+### Reports
+
+## 7 Goods Receipt Module
+
+### Purpose
+
+### Workflow
+
+### Inputs
+
+### Outputs
+
+### Business Rules
+
+### Validation Rules
+
+### Document Generation
+
+### Reports
+
+## 8 Inspection Module
+
+### Purpose
+
+### Workflow
+
+### Inputs
+
+### Outputs
+
+### Business Rules
+
+### Validation Rules
+
+### Document Generation
+
+### Reports
+
+## 9 Dashboard
+
+### Purpose
+
+### Workflow
+
+### Inputs
+
+### Outputs
+
+### Business Rules
+
+### Validation Rules
+
+### Document Generation
+
+### Reports
+
+## 10 Reports
+
+## 11 Search
+
+## 12 Audit Trail
+
+## 13 Future Enhancements
