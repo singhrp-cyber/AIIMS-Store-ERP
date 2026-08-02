@@ -60,7 +60,49 @@
 
 ### Purpose
 
+The Purchase Order module shall create Purchase Orders against approved Rate Contracts.
+
+All Purchase Orders shall be linked to one Rate Contract.
+
+Item master shall always be derived from the selected Rate Contract.
+
+No standalone Item Master shall exist.
+
 ### Workflow
+
+RC Selection
+
+↓
+
+Item Search
+
+↓
+
+Auto Fill Item Details
+
+↓
+
+Enter Quantity
+
+↓
+
+Calculate GST
+
+↓
+
+Calculate Amount
+
+↓
+
+Save Purchase Order
+
+↓
+
+Lock Purchase Order
+
+↓
+
+Generate Purchase Order Document
 
 ### Screen Layout
 
