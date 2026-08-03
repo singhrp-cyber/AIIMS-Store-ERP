@@ -1,6 +1,6 @@
 # AIIMS Store ERP Workbook Design Specification
 
-Version: 1.0
+Version: 1.1
 
 This document defines the production Google Spreadsheet workbook design for AIIMS Store ERP. It is a design specification only. It does not contain sample data, Apps Script code, pseudo code, or business rules.
 
@@ -56,7 +56,26 @@ This document defines the production Google Spreadsheet workbook design for AIIM
 
 #### Purpose
 
-Central source for workbook configuration, dropdown lists, numbering controls, financial year values, statuses, report filters, protected settings, and named ranges.
+Central source for workbook configuration, dropdown lists, numbering controls, financial year values, statuses, report filters, protected settings and named ranges.
+
+All application modules shall use Settings as the central configuration source.
+
+#### Numbering Configuration
+
+Settings shall maintain configurable numbering for
+
+- Rate Contract
+- Purchase Order
+- Receipt
+- Inspection
+
+Each numbering configuration shall support
+
+- Prefix
+- Financial Year
+- Running Number
+
+Numbering configuration shall remain editable only by Administrator.
 
 #### Columns
 
@@ -79,8 +98,15 @@ Central source for workbook configuration, dropdown lists, numbering controls, f
 
 #### Relationships
 
-- Provides dropdown values and control values to all entry, register, dashboard, report, and system sheets.
-- Provides financial year and numbering configuration for RC, PO, Receipt, and Inspection numbering.
+- Provides dropdown values and control values to all entry, register, dashboard, report and system sheets.
+- Provides Financial Year configuration.
+- Provides numbering configuration for Rate Contract, Purchase Order, Receipt and Inspection.
+- Provides Committee Members.
+- Provides GST Rates.
+- Provides Delivery Defaults.
+- Provides Consignee Defaults.
+- Provides Report Configuration.
+- Provides validation lists and named ranges.
 
 #### Primary Key
 
@@ -98,17 +124,26 @@ Row 1.
 
 - Header row.
 - Audit fields.
-- Numbering control rows after production configuration approval.
+- Numbering configuration after production approval.
 
 #### Named Ranges Required
 
 - `SETTINGS_TABLE`
 - `FINANCIAL_YEAR_LIST`
 - `STATUS_LIST`
+- `RC_STATUS_LIST`
 - `PO_STATUS_LIST`
 - `RECEIPT_STATUS_LIST`
 - `INSPECTION_STATUS_LIST`
 - `TRUE_FALSE_LIST`
+- `SUPPLY_MODE_LIST`
+- `GST_RATE_LIST`
+- `COMMITTEE_LIST`
+- `INSPECTION_RESULT_LIST`
+- `REPORT_NAME_LIST`
+- `MONTH_LIST`
+- `QUARTER_LIST`
+- `ACTION_TYPE_LIST`
 - `NUMBERING_CONFIG`
 
 #### Conditional Formatting Requirements
@@ -121,45 +156,49 @@ Row 1.
 
 #### Purpose
 
-Approved Rate Contract master containing RC, bidder, distributor, and item details used to create Purchase Orders. Item master values are derived from selected Rate Contracts; no standalone Item Master sheet exists.
+Approved Rate Contract master containing RC, bidder, distributor, make, and item details used for Purchase Order creation. Item selection in Purchase Orders is always derived from the selected Rate Contract. No standalone Item Master sheet exists. Distributor is optional where the bidder supplies directly.
 
 #### Columns
 
-| Order | Column | Data Type | Mandatory / Optional | Editable / Locked | Dropdown Source | Validation Rules |
-| --- | --- | --- | --- | --- | --- | --- |
-| 1 | RC_Line_ID | Text | Mandatory | Locked | None | Unique line-level key. |
-| 2 | RC_No | Text | Mandatory | Editable | None | Nonblank; grouped across RC lines. |
-| 3 | RC_Date | Date | Mandatory | Editable | None | Valid date. |
-| 4 | Financial_Year | Text | Mandatory | Editable | `FINANCIAL_YEAR_LIST` | Must exist in Settings. |
-| 5 | RC_Status | Text | Mandatory | Editable | `RC_STATUS_LIST` | Must exist in Settings. |
-| 6 | Bidder_ID | Text | Mandatory | Editable | None | Nonblank. |
-| 7 | Bidder_Name | Text | Mandatory | Editable | None | Nonblank. |
-| 8 | Distributor_ID | Text | Optional | Editable | None | Optional for direct supply. |
-| 9 | Distributor_Name | Text | Optional | Editable | None | Optional for direct supply. |
-| 10 | Supply_Mode | Text | Mandatory | Editable | `SUPPLY_MODE_LIST` | Must identify distributor or direct supply mode. |
-| 11 | Item_ID | Text | Mandatory | Editable | None | Unique within RC as applicable. |
-| 12 | Item_Name | Text | Mandatory | Editable | None | Nonblank. |
-| 13 | Item_Description | Text | Optional | Editable | None | Free text. |
-| 14 | Unit | Text | Mandatory | Editable | `UNIT_LIST` | Must exist in Settings. |
-| 15 | Category | Text | Optional | Editable | `ITEM_CATEGORY_LIST` | Must exist in Settings if used. |
-| 16 | Rate | Number | Mandatory | Editable | None | Number greater than or equal to zero. |
-| 17 | GST_Percent | Number | Mandatory | Editable | `GST_RATE_LIST` | Must exist in Settings. |
-| 18 | RC_Start_Date | Date | Mandatory | Editable | None | Valid date. |
-| 19 | RC_End_Date | Date | Mandatory | Editable | None | Valid date. |
-| 20 | RC_Document_Ref | Text | Optional | Editable | None | Document reference or Drive link. |
-| 21 | Active | Boolean | Mandatory | Editable | `TRUE_FALSE_LIST` | Must be TRUE or FALSE. |
-| 22 | Remarks | Text | Optional | Editable | None | Free text. |
-| 23 | Created_At | DateTime | Mandatory | Locked | None | System timestamp. |
-| 24 | Created_By | Text | Mandatory | Locked | None | System user identifier. |
-| 25 | Updated_At | DateTime | Optional | Locked | None | System timestamp. |
-| 26 | Updated_By | Text | Optional | Locked | None | System user identifier. |
+| Order | Column           | Data Type | Mandatory / Optional | Editable / Locked | Dropdown Source       | Validation Rules                      |
+| ----: | ---------------- | --------- | -------------------- | ----------------- | --------------------- | ------------------------------------- |
+|     1 | RC_Line_ID       | Text      | Mandatory            | Locked            | None                  | Unique line-level key.                |
+|     2 | RC_No            | Text      | Mandatory            | Editable          | None                  | Nonblank; grouped across RC lines.    |
+|     3 | RC_Date          | Date      | Mandatory            | Editable          | None                  | Valid date.                           |
+|     4 | Financial_Year   | Text      | Mandatory            | Editable          | `FINANCIAL_YEAR_LIST` | Must exist in Settings.               |
+|     5 | RC_Status        | Text      | Mandatory            | Editable          | `RC_STATUS_LIST`      | Must exist in Settings.               |
+|     6 | Bidder_ID        | Text      | Mandatory            | Editable          | None                  | Nonblank.                             |
+|     7 | Bidder_Name      | Text      | Mandatory            | Editable          | None                  | Nonblank.                             |
+|     8 | Distributor_ID   | Text      | Optional             | Editable          | None                  | Optional for Direct Supply.           |
+|     9 | Distributor_Name | Text      | Optional             | Editable          | None                  | Optional for Direct Supply.           |
+|    10 | Supply_Mode      | Text      | Mandatory            | Editable          | `SUPPLY_MODE_LIST`    | Direct Supply / Through Distributor.  |
+|    11 | Item_ID          | Text      | Mandatory            | Editable          | None                  | Unique within RC.                     |
+|    12 | Item_Name        | Text      | Mandatory            | Editable          | None                  | Nonblank.                             |
+|    13 | Item_Description | Text      | Optional             | Editable          | None                  | Free text.                            |
+|    14 | Make             | Text      | Mandatory            | Editable          | None                  | Manufacturer / Brand.                 |
+|    15 | Unit             | Text      | Optional             | Editable          | `UNIT_LIST`           | If specified, must exist in Settings. |
+|    16 | Category         | Text      | Optional             | Editable          | `ITEM_CATEGORY_LIST`  | Must exist in Settings if used.       |
+|    17 | Rate             | Number    | Mandatory            | Editable          | None                  | ≥ 0                                   |
+|    18 | GST_Percent      | Number    | Optional             | Editable          | `GST_RATE_LIST`       | If specified, must exist in Settings. |
+|    19 | RC_Start_Date    | Date      | Mandatory            | Editable          | None                  | Valid date.                           |
+|    20 | RC_End_Date      | Date      | Mandatory            | Editable          | None                  | Valid date.                           |
+|    21 | RC_Document_Ref  | Text      | Optional             | Editable          | None                  | Document reference / Drive link.      |
+|    22 | Active           | Boolean   | Mandatory            | Editable          | `TRUE_FALSE_LIST`     | TRUE/FALSE                            |
+|    23 | Remarks          | Text      | Optional             | Editable          | None                  | Free text.                            |
+|    24 | Created_At       | DateTime  | Mandatory            | Locked            | None                  | System timestamp.                     |
+|    25 | Created_By       | Text      | Mandatory            | Locked            | None                  | System user identifier.               |
+|    26 | Updated_At       | DateTime  | Optional             | Locked            | None                  | System timestamp.                     |
+|    27 | Updated_By       | Text      | Optional             | Locked            | None                  | System user identifier.               |
+
 
 #### Relationships
 
-- Parent source for PO item selection.
-- `RC_No` links to `PO_Entry` and `PO_Register`.
-- Bidder and distributor values are selected through the RC relationship.
-- Item values available for PO creation are filtered by selected RC, bidder, and distributor.
+- Parent source for Purchase Orders.
+- One RC may contain multiple items.
+- Bidder and Distributor are derived from the selected RC.
+- Distributor may remain blank when Supply Mode is Direct Supply.
+- Item search shall support both Item_ID and Item_Name.
+
 
 #### Primary Key
 
@@ -167,7 +206,7 @@ Approved Rate Contract master containing RC, bidder, distributor, and item detai
 
 #### Hidden Columns
 
-None required for Version 1.0.
+None.
 
 #### Freeze Rows
 
@@ -178,7 +217,7 @@ Row 1.
 - Header row.
 - Primary key column.
 - Audit columns.
-- Locked historical RC rows after administrative approval.
+- Locked historical RC rows after approval.
 
 #### Named Ranges Required
 
@@ -192,10 +231,10 @@ Row 1.
 
 #### Conditional Formatting Requirements
 
-- Highlight inactive RC lines.
-- Highlight RC lines nearing expiry.
-- Highlight expired RC lines.
-- Highlight missing mandatory values.
+- Highlight inactive RC rows.
+- Highlight RCs nearing expiry.
+- Highlight expired RCs.
+- Highlight missing mandatory fields.
 
 ## 4 Transaction Sheets
 
@@ -203,41 +242,63 @@ Row 1.
 
 #### Purpose
 
-User-facing Purchase Order entry screen for selecting one approved Rate Contract, searching items derived from that Rate Contract, entering quantities, calculating GST and amount fields, and preparing a Purchase Order for controlled save.
+User-facing Purchase Order entry screen for creating a Purchase Order against one approved Rate Contract.
+
+PO Number and PO Date are entered manually.
+
+Bidder, Distributor, Item, Make, Unit and Rate are derived from the selected RC.
+
+Delivery Period, Delivery Address and Consignee are automatically loaded from Settings but remain editable before save.
+
+GST is optional in the Purchase Order and is derived from the selected RC.
 
 #### Columns
 
 | Order | Column | Data Type | Mandatory / Optional | Editable / Locked | Dropdown Source | Validation Rules |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | Entry_Row_ID | Text | Mandatory | Locked | None | Unique row key for entry rows. |
-| 2 | PO_No | Text | Optional | Locked | None | Assigned during controlled save. |
+| 2 | PO_No | Text | **Mandatory** | **Editable** | None | Manual entry. Must be unique. |
 | 3 | PO_Date | Date | Mandatory | Editable | None | Valid date. |
-| 4 | Financial_Year | Text | Mandatory | Locked | `FINANCIAL_YEAR_LIST` | Derived or selected from Settings. |
+| 4 | Financial_Year | Text | Mandatory | Locked | `FINANCIAL_YEAR_LIST` | Derived from PO Date. |
 | 5 | RC_No | Text | Mandatory | Editable | `ACTIVE_RC_LIST` | Must exist in active RC master. |
 | 6 | Bidder_ID | Text | Mandatory | Locked | Filtered from RC | Derived from selected RC. |
 | 7 | Bidder_Name | Text | Mandatory | Locked | Filtered from RC | Derived from selected RC. |
-| 8 | Distributor_ID | Text | Optional | Editable | Filtered from RC and Bidder | Optional for direct supply. |
-| 9 | Distributor_Name | Text | Optional | Locked | Filtered from RC and Bidder | Derived from selected distributor. |
-| 10 | Supply_Mode | Text | Mandatory | Locked | Filtered from RC | Derived from selected RC/distributor relationship. |
-| 11 | Item_ID | Text | Mandatory | Editable | Filtered from RC/Bidder/Distributor | Must exist in filtered RC item list. |
-| 12 | Item_Name | Text | Mandatory | Locked | Filtered from RC item | Derived from Item_ID. |
-| 13 | Item_Description | Text | Optional | Locked | Filtered from RC item | Derived from Item_ID. |
-| 14 | Unit | Text | Mandatory | Locked | Filtered from RC item | Derived from Item_ID. |
-| 15 | Quantity | Number | Mandatory | Editable | None | Number greater than zero. |
-| 16 | Rate | Number | Mandatory | Locked | Filtered from RC item | Derived from Item_ID. |
-| 17 | Taxable_Amount | Number | Mandatory | Locked | None | Calculated amount field. |
-| 18 | GST_Percent | Number | Mandatory | Locked | Filtered from RC item | Derived from Item_ID. |
-| 19 | GST_Amount | Number | Mandatory | Locked | None | Calculated amount field. |
-| 20 | Total_Amount | Number | Mandatory | Locked | None | Calculated amount field. |
-| 21 | PO_Status | Text | Mandatory | Locked | `PO_STATUS_LIST` | Initial controlled status. |
-| 22 | Remarks | Text | Optional | Editable | None | Free text. |
-| 23 | Created_At | DateTime | Optional | Locked | None | System timestamp after save. |
-| 24 | Created_By | Text | Optional | Locked | None | System user identifier after save. |
+| 8 | Distributor_ID | Text | Optional | Editable | Filtered from RC and Bidder | Optional for Direct Supply. |
+| 9 | Distributor_Name | Text | Optional | Locked | Filtered from RC and Bidder | Derived from selected Distributor. |
+| 10 | Delivery_Period_Days | Number | Mandatory | Editable | Settings | Default from Settings. |
+| 11 | Delivery_Address | Text | Mandatory | Editable | Settings | Default from Settings. |
+| 12 | Consignee | Text | Mandatory | Editable | Settings | Default from Settings. |
+| 13 | Supply_Mode | Text | Mandatory | Locked | Filtered from RC | Derived from selected RC. |
+| 14 | Item_ID | Text | Mandatory | Editable | Filtered from RC | Searchable. |
+| 15 | Item_Name | Text | Mandatory | Locked | Filtered from RC | Derived from Item_ID. |
+| 16 | Item_Description | Text | Optional | Locked | Filtered from RC | Derived from Item_ID. |
+| 17 | Make | Text | Mandatory | Locked | Filtered from RC | Derived from RC. |
+| 18 | Unit | Text | Mandatory | Locked | Filtered from RC | Derived from Item_ID. |
+| 19 | Quantity | Number | Mandatory | Editable | None | Greater than zero. |
+| 20 | Rate | Number | Mandatory | Locked | Filtered from RC | Derived from RC. |
+| 21 | Taxable_Amount | Number | Mandatory | Locked | None | Calculated. |
+| 22 | GST_Percent | Number | Optional | Editable | `GST_RATE_LIST` | Derived from RC. |
+| 23 | GST_Amount | Number | Locked | Locked | None | Calculated. |
+| 24 | Total_Amount | Number | Mandatory | Locked | None | Calculated. |
+| 25 | PO_Status | Text | Mandatory | Locked | `PO_STATUS_LIST` | Initial Status. |
+| 26 | Remarks | Text | Optional | Editable | None | Free text. |
+| 27 | Created_At | DateTime | Optional | Locked | None | System timestamp. |
+| 28 | Created_By | Text | Optional | Locked | None | System user identifier. |
 
 #### Relationships
 
-- Reads RC, bidder, distributor, item, rate, GST, and unit from `RC_Master`.
+- Reads RC, Bidder, Distributor, Item, Make, Unit, Rate and GST from `RC_Master`.
 - Writes controlled records to `PO_Register`.
+
+#### Validation Rules
+
+- One PO shall reference exactly one RC.
+- PO Number must be unique.
+- Distributor may remain blank for Direct Supply.
+- Items shall be selected only from the selected RC.
+- Item search shall support Item Code and Item Name.
+- Delivery details may be edited before Save.
+- GST remains optional in PO.
 
 #### Primary Key
 
@@ -255,7 +316,7 @@ Header row and entry header section.
 
 - Derived RC fields.
 - Calculated amount fields.
-- PO number and status fields.
+- Status fields.
 
 #### Named Ranges Required
 
@@ -267,8 +328,10 @@ Header row and entry header section.
 #### Conditional Formatting Requirements
 
 - Highlight missing mandatory entry fields.
-- Highlight invalid filtered dropdown selections.
-- Highlight calculated total section.
+- Highlight invalid dropdown selections.
+- Highlight calculated totals.
+
+---
 
 ### 4.2 PO_Register
 
@@ -289,33 +352,41 @@ Authoritative locked register of saved Purchase Orders and line items.
 | 7 | Bidder_Name | Text | Mandatory | Locked | None | Derived from RC. |
 | 8 | Distributor_ID | Text | Optional | Locked | None | Optional for direct supply. |
 | 9 | Distributor_Name | Text | Optional | Locked | None | Optional for direct supply. |
-| 10 | Supply_Mode | Text | Mandatory | Locked | `SUPPLY_MODE_LIST` | Must exist in Settings. |
-| 11 | Item_ID | Text | Mandatory | Locked | None | Derived from RC. |
-| 12 | Item_Name | Text | Mandatory | Locked | None | Derived from RC. |
-| 13 | Item_Description | Text | Optional | Locked | None | Derived from RC. |
-| 14 | Unit | Text | Mandatory | Locked | `UNIT_LIST` | Must exist in Settings. |
-| 15 | Ordered_Quantity | Number | Mandatory | Locked | None | Number greater than zero. |
-| 16 | Rate | Number | Mandatory | Locked | None | Number greater than or equal to zero. |
-| 17 | Taxable_Amount | Number | Mandatory | Locked | None | Calculated amount field. |
-| 18 | GST_Percent | Number | Mandatory | Locked | `GST_RATE_LIST` | Must exist in Settings. |
-| 19 | GST_Amount | Number | Mandatory | Locked | None | Calculated amount field. |
-| 20 | Total_Amount | Number | Mandatory | Locked | None | Calculated amount field. |
-| 21 | Received_Quantity | Number | Mandatory | Locked | None | Updated from receipt records. |
-| 22 | Balance_Quantity | Number | Mandatory | Locked | None | Derived quantity field. |
-| 23 | PO_Status | Text | Mandatory | Locked | `PO_STATUS_LIST` | Pending, Partial, Completed, or Closed. |
-| 24 | Close_Reason | Text | Optional | Locked | `PO_CLOSE_REASON_LIST` | Required when status is Closed. |
-| 25 | PO_Document_Link | Text | Optional | Locked | None | Drive link or document reference. |
-| 26 | Locked | Boolean | Mandatory | Locked | `TRUE_FALSE_LIST` | Must be TRUE after controlled save. |
-| 27 | Created_At | DateTime | Mandatory | Locked | None | System timestamp. |
-| 28 | Created_By | Text | Mandatory | Locked | None | System user identifier. |
-| 29 | Updated_At | DateTime | Optional | Locked | None | System timestamp. |
-| 30 | Updated_By | Text | Optional | Locked | None | System user identifier. |
+| 10 | Delivery_Period_Days | Number    | Mandatory | Locked            | None            | Stored from PO   |
+| 11 | Delivery_Address     | Text      | Mandatory            | Locked            | None            | Stored from PO   |
+| 12 | Consignee            | Text      | Mandatory            | Locked            | None            | Stored from PO   |
+| 13 | Supply_Mode | Text | Mandatory | Locked | `SUPPLY_MODE_LIST` | Must exist in Settings. |
+| 14 | Item_ID | Text | Mandatory | Locked | None | Derived from RC. |
+| 15 | Item_Name | Text | Mandatory | Locked | None | Derived from RC. |
+| 16 | Item_Description | Text | Optional | Locked | None | Derived from RC. |
+| 17 | Make | Text | Mandatory | Locked | Filtered from RC | Derived from RC. |
+| 18 | Unit | Text | Mandatory | Locked | `UNIT_LIST` | Must exist in Settings. |
+| 19 | Ordered_Quantity | Number | Mandatory | Locked | None | Number greater than zero. |
+| 20 | Rate | Number | Mandatory | Locked | None | Number greater than or equal to zero. |
+| 21 | Taxable_Amount | Number | Mandatory | Locked | None | Calculated amount field. |
+| 22 | GST_Percent | Number | Optional | Locked | `GST_RATE_LIST` | Must exist in GST_RATE_LIST if specified.|
+| 23 | GST_Amount | Number | Mandatory | Locked | None | Calculated amount field. |
+| 24 | Total_Amount | Number | Mandatory | Locked | None | Calculated amount field. |
+| 25 | Received_Quantity | Number | Mandatory | Locked | None | Updated from receipt records. |
+| 26 | Balance_Quantity | Number | Mandatory | Locked | None | Derived quantity field. |
+| 27 | PO_Status | Text | Mandatory | Locked | `PO_STATUS_LIST` | Pending, Partial, Completed, or Closed. |
+| 28 | Close_Reason | Text | Optional | Locked | `PO_CLOSE_REASON_LIST` | Required when status is Closed. |
+| 29 | PO_Document_Link | Text | Optional | Locked | None | Drive link or document reference. |
+| 30 | Locked | Boolean | Mandatory | Locked | `TRUE_FALSE_LIST` | Must be TRUE after controlled save. |
+| 31 | Created_At | DateTime | Mandatory | Locked | None | System timestamp. |
+| 33 | Created_By | Text | Mandatory | Locked | None | System user identifier. |
+| 34 | Updated_At | DateTime | Optional | Locked | None | System timestamp. |
+| 35 | Updated_By | Text | Optional | Locked | None | System user identifier. |
 
 #### Relationships
 
 - Child of `RC_Master`.
 - Parent source for `Receipt_Entry` and `Receipt_Register`.
-- Feeds Dashboard, Reports, and document generation.
+- One Purchase Order shall reference exactly one RC.
+- One Purchase Order may contain multiple items.
+- All items shall belong only to the selected RC.
+- One Purchase Order may receive multiple supplier invoices.
+- Feeds Dashboard, Reports and document generation.
 
 #### Primary Key
 
@@ -351,12 +422,34 @@ Row 1.
 - Highlight completed POs.
 - Highlight closed POs.
 - Highlight balance quantity greater than zero.
+- Highlight overdue delivery based on Delivery Period.
+- Highlight pending balance quantity.
 
 ### 4.3 Receipt_Entry
 
 #### Purpose
 
-User-facing Goods Receipt entry screen for selecting Purchase Orders and recording receipt line details before controlled save.
+User-facing Goods Receipt entry screen for recording Goods Receipt against a Purchase Order.
+
+Receipt processing shall always be **Invoice-wise**.
+
+User shall first select a Purchase Order, then enter/select the Supplier Invoice, after which only the items belonging to that invoice shall be available for receipt.
+
+#### Workflow
+
+```text
+Select PO
+      ↓
+Enter / Select Invoice
+      ↓
+Load Invoice Items
+      ↓
+Enter Received Quantity
+      ↓
+Verify Invoice GST
+      ↓
+Save Receipt
+```
 
 #### Columns
 
@@ -365,32 +458,63 @@ User-facing Goods Receipt entry screen for selecting Purchase Orders and recordi
 | 1 | Receipt_Entry_Row_ID | Text | Mandatory | Locked | None | Unique row key. |
 | 2 | Receipt_No | Text | Optional | Locked | None | Assigned during controlled save. |
 | 3 | Receipt_Date | Date | Mandatory | Editable | None | Valid date. |
-| 4 | Financial_Year | Text | Mandatory | Locked | `FINANCIAL_YEAR_LIST` | Derived or selected from Settings. |
+| 4 | Financial_Year | Text | Mandatory | Locked | `FINANCIAL_YEAR_LIST` | Derived from Receipt Date. |
 | 5 | PO_No | Text | Mandatory | Editable | `OPEN_PO_LIST` | Must exist in open PO list. |
-| 6 | PO_Line_ID | Text | Mandatory | Editable | Filtered from PO_No | Must exist in selected PO. |
-| 7 | RC_No | Text | Mandatory | Locked | None | Derived from PO. |
-| 8 | Bidder_Name | Text | Mandatory | Locked | None | Derived from PO. |
-| 9 | Distributor_Name | Text | Optional | Locked | None | Derived from PO. |
-| 10 | Item_ID | Text | Mandatory | Locked | None | Derived from PO line. |
-| 11 | Item_Name | Text | Mandatory | Locked | None | Derived from PO line. |
-| 12 | Unit | Text | Mandatory | Locked | None | Derived from PO line. |
-| 13 | Ordered_Quantity | Number | Mandatory | Locked | None | Derived from PO line. |
-| 14 | Previously_Received_Quantity | Number | Mandatory | Locked | None | Derived from receipt register. |
-| 15 | Balance_Quantity | Number | Mandatory | Locked | None | Derived quantity field. |
-| 16 | Received_Quantity | Number | Mandatory | Editable | None | Number greater than zero. |
-| 17 | Invoice_No | Text | Optional | Editable | None | Text reference. |
-| 18 | Invoice_Date | Date | Optional | Editable | None | Valid date if present. |
-| 19 | Delivery_Challan_No | Text | Optional | Editable | None | Text reference. |
-| 20 | Receipt_Status | Text | Mandatory | Locked | `RECEIPT_STATUS_LIST` | Initial controlled status. |
-| 21 | Remarks | Text | Optional | Editable | None | Free text. |
-| 22 | Created_At | DateTime | Optional | Locked | None | System timestamp after save. |
-| 23 | Created_By | Text | Optional | Locked | None | System user identifier after save. |
+| 6 | Invoice_No | Text | Mandatory | Editable | None | Must be unique within selected PO. |
+| 7 | Invoice_Date | Date | Mandatory | Editable | None | Valid date. |
+| 8 | Supplier_Invoice_Value | Number | Mandatory | Editable | None | Greater than zero. |
+| 9 | RC_No | Text | Mandatory | Locked | None | Derived from PO. |
+| 10 | Bidder_Name | Text | Mandatory | Locked | None | Derived from PO. |
+| 11 | Distributor_Name | Optional | Locked | None | Derived from PO. |
+| 12 | Item_ID | Text | Mandatory | Locked | None | Derived from selected Invoice. |
+| 13 | Item_Name | Text | Mandatory | Locked | None | Derived from selected Invoice. |
+| 14 | Make | Text | Mandatory | Locked | None | Derived from PO / RC. |
+| 15 | Unit | Text | Mandatory | Locked | None | Derived from PO. |
+| 16 | Ordered_Quantity | Number | Mandatory | Locked | None | Derived from PO. |
+| 17 | Previously_Received_Quantity | Number | Mandatory | Locked | None | Derived from Receipt Register. |
+| 18 | Balance_Quantity | Number | Mandatory | Locked | None | Calculated. |
+| 19 | Received_Quantity | Number | Mandatory | Editable | None | Cannot exceed Balance Quantity. |
+| 20 | Rate | Number | Mandatory | Locked | None | Derived from PO. |
+| 21 | GST_Percent | Number | Mandatory | Editable | `GST_RATE_LIST` | Mandatory at Receipt stage. |
+| 22 | Taxable_Value | Number | Mandatory | Locked | None | Calculated. |
+| 23 | GST_Value | Number | Mandatory | Locked | None | Calculated. |
+| 24 | Total_Value | Number | Mandatory | Locked | None | Calculated. |
+| 25 | Receipt_Status | Text | Mandatory | Locked | `RECEIPT_STATUS_LIST` | Initial Status. |
+| 26 | Remarks | Text | Optional | Editable | None | Free text. |
+| 27 | Created_At | DateTime | Optional | Locked | None | System timestamp. |
+| 28 | Created_By | Text | Optional | Locked | None | System user identifier. |
 
 #### Relationships
 
-- Reads PO, RC, bidder, distributor, and item details from `PO_Register`.
-- Writes controlled receipt records to `Receipt_Register`.
-- Provides source data for inspection verification.
+- Reads PO details from `PO_Register`.
+- Receipt is always linked to one PO and one Supplier Invoice.
+- One PO may contain multiple Supplier Invoices.
+- Writes controlled records to `Receipt_Register`.
+- Provides source data for `Inspection_Verification`.
+
+#### Validation Rules
+
+- PO is mandatory.
+- Invoice Number is mandatory.
+- Invoice Number shall be unique within the selected PO.
+- Received Quantity cannot exceed Balance Quantity.
+- GST details are mandatory before Save.
+
+#### Item Section
+
+Each invoice item shall display:
+
+- Item Code
+- Item Name
+- Ordered Qty
+- Previously Received Qty
+- Balance Qty
+- Current Receipt Qty
+- Rate
+- GST %
+- Taxable Value
+- GST Value
+- Total Value
 
 #### Primary Key
 
@@ -407,8 +531,10 @@ Header row and entry header section.
 #### Protected Ranges
 
 - Derived PO fields.
-- Balance and previously received quantity fields.
-- Receipt number and status fields.
+- Calculated amount fields.
+- Balance Quantity.
+- Receipt Number.
+- Status fields.
 
 #### Named Ranges Required
 
@@ -419,14 +545,40 @@ Header row and entry header section.
 #### Conditional Formatting Requirements
 
 - Highlight missing mandatory fields.
-- Highlight received quantity entry area.
-- Highlight selected PO lines with remaining balance.
+- Highlight pending balance quantity.
+- Highlight invalid GST details.
+
+#### Save Confirmation
+
+After successful save, display
+
+- Receipt Number
+- PO Number
+- Invoice Number
+- Supplier
+- Receipt Date
+- Item-wise Receipt Summary
+- Item-wise GST
+- Item-wise Total Value
+
+Buttons
+
+- Print Receipt
+- Close
+
+Receipt may be reprinted any time.
 
 ### 4.4 Receipt_Register
 
 #### Purpose
 
 Authoritative locked register of saved Goods Receipt records and receipt line items.
+
+Receipt Register is maintained **Invoice-wise**.
+
+One Purchase Order may have multiple Supplier Invoices.
+
+One Supplier Invoice may contain multiple items.
 
 #### Columns
 
@@ -436,35 +588,55 @@ Authoritative locked register of saved Goods Receipt records and receipt line it
 | 2 | Receipt_No | Text | Mandatory | Locked | None | Nonblank; grouped across receipt lines. |
 | 3 | Receipt_Date | Date | Mandatory | Locked | None | Valid date. |
 | 4 | Financial_Year | Text | Mandatory | Locked | `FINANCIAL_YEAR_LIST` | Must exist in Settings. |
-| 5 | PO_No | Text | Mandatory | Locked | `PO_LIST` | Must exist in PO register. |
-| 6 | PO_Line_ID | Text | Mandatory | Locked | None | Must exist in PO register. |
-| 7 | RC_No | Text | Mandatory | Locked | None | Derived from PO. |
-| 8 | Bidder_Name | Text | Mandatory | Locked | None | Derived from PO. |
-| 9 | Distributor_Name | Text | Optional | Locked | None | Derived from PO. |
-| 10 | Item_ID | Text | Mandatory | Locked | None | Derived from PO line. |
-| 11 | Item_Name | Text | Mandatory | Locked | None | Derived from PO line. |
-| 12 | Unit | Text | Mandatory | Locked | None | Derived from PO line. |
-| 13 | Ordered_Quantity | Number | Mandatory | Locked | None | Derived from PO line. |
-| 14 | Received_Quantity | Number | Mandatory | Locked | None | Number greater than zero. |
-| 15 | Cumulative_Received_Quantity | Number | Mandatory | Locked | None | Derived receipt total by PO line. |
-| 16 | Balance_Quantity | Number | Mandatory | Locked | None | Derived quantity field. |
-| 17 | Invoice_No | Text | Optional | Locked | None | Text reference. |
-| 18 | Invoice_Date | Date | Optional | Locked | None | Valid date if present. |
-| 19 | Delivery_Challan_No | Text | Optional | Locked | None | Text reference. |
-| 20 | Receipt_Status | Text | Mandatory | Locked | `RECEIPT_STATUS_LIST` | Must exist in Settings. |
-| 21 | Inspection_Required | Boolean | Mandatory | Locked | `TRUE_FALSE_LIST` | Must be TRUE or FALSE. |
-| 22 | Inspection_Status | Text | Optional | Locked | `INSPECTION_STATUS_LIST` | Updated through inspection process. |
-| 23 | Receipt_Document_Link | Text | Optional | Locked | None | Drive link or document reference. |
-| 24 | Created_At | DateTime | Mandatory | Locked | None | System timestamp. |
-| 25 | Created_By | Text | Mandatory | Locked | None | System user identifier. |
-| 26 | Updated_At | DateTime | Optional | Locked | None | System timestamp. |
-| 27 | Updated_By | Text | Optional | Locked | None | System user identifier. |
+| 5 | PO_No | Text | Mandatory | Locked | `PO_LIST` | Must exist in PO Register. |
+| 6 | Invoice_No | Text | Mandatory | Locked | None | Unique within selected PO. |
+| 7 | Invoice_Date | Date | Mandatory | Locked | None | Valid date. |
+| 8 | Supplier_Invoice_Value | Number | Mandatory | Locked | None | Greater than zero. |
+| 9 | RC_No | Text | Mandatory | Locked | None | Derived from PO. |
+| 10 | Bidder_Name | Text | Mandatory | Locked | None | Derived from PO. |
+| 11 | Distributor_Name | Text | Optional | Locked | None | Derived from PO. |
+| 12 | Item_ID | Text | Mandatory | Locked | None | Derived from PO. |
+| 13 | Item_Name | Text | Mandatory | Locked | None | Derived from PO. |
+| 14 | Make | Text | Mandatory | Locked | None | Derived from RC. |
+| 15 | Unit | Text | Mandatory | Locked | None | Derived from PO. |
+| 16 | Ordered_Quantity | Number | Mandatory | Locked | None | Derived from PO. |
+| 17 | Received_Quantity | Number | Mandatory | Locked | None | Greater than zero. |
+| 18 | Cumulative_Received_Quantity | Number | Mandatory | Locked | None | Updated automatically. |
+| 19 | Balance_Quantity | Number | Mandatory | Locked | None | Calculated automatically. |
+| 20 | Rate | Number | Mandatory | Locked | None | Derived from PO. |
+| 21 | GST_Percent | Number | Mandatory | Locked | `GST_RATE_LIST` | Stored from Receipt Entry. |
+| 22 | Taxable_Value | Number | Mandatory | Locked | None | Calculated. |
+| 23 | GST_Value | Number | Mandatory | Locked | None | Calculated. |
+| 24 | Total_Value | Number | Mandatory | Locked | None | Calculated. |
+| 25 | Receipt_Status | Text | Mandatory | Locked | `RECEIPT_STATUS_LIST` | Must exist in Settings. |
+| 26 | Inspection_Required | Boolean | Mandatory | Locked | `TRUE_FALSE_LIST` | TRUE/FALSE. |
+| 27 | Inspection_Status | Text | Mandatory | Locked | `INSPECTION_STATUS_LIST` | Updated after Inspection. |
+| 28 | Receipt_Document_Link | Text | Optional | Locked | None | Drive link or document reference. |
+| 29 | Created_At | DateTime | Mandatory | Locked | None | System timestamp. |
+| 30 | Created_By | Text | Mandatory | Locked | None | System user identifier. |
+| 31 | Updated_At | DateTime | Optional | Locked | None | System timestamp. |
+| 32 | Updated_By | Text | Optional | Locked | None | System user identifier. |
 
 #### Relationships
 
 - Child of `PO_Register`.
 - Parent source for `Inspection_Verification` and `Inspection_Register`.
+- One Purchase Order may have multiple Supplier Invoices.
+- One Supplier Invoice may contain multiple items.
+- Receipt processing is always Invoice-wise.
 - Feeds Dashboard and Reports.
+
+#### Validation Rules
+
+- Duplicate Invoice Number under the same Purchase Order is not allowed.
+- Cumulative Received Quantity shall not exceed Ordered Quantity.
+- GST details are mandatory for every invoice item.
+- Received Quantity shall not exceed Balance Quantity.
+
+#### Receipt Editing
+
+- Receipt Clerk cannot edit saved Receipt records.
+- Only Administrator may reopen or edit a saved Receipt.
 
 #### Primary Key
 
@@ -483,7 +655,11 @@ Row 1.
 
 - Entire register except controlled system-update ranges.
 - Header row.
-- Primary key, derived, document, and audit columns.
+- Primary key.
+- Derived fields.
+- Calculated amount fields.
+- Document link.
+- Audit columns.
 
 #### Named Ranges Required
 
@@ -494,15 +670,34 @@ Row 1.
 
 #### Conditional Formatting Requirements
 
-- Highlight receipts pending inspection.
-- Highlight partially received PO lines.
+- Highlight pending balance quantity.
+- Highlight invoices pending inspection.
+- Highlight partially received items.
 - Highlight completed receipt lines.
 
 ### 4.5 Inspection_Verification
 
 #### Purpose
 
-User-facing inspection verification screen for selecting receipt lines pending inspection and preparing inspection results before controlled save.
+User-facing Inspection Verification screen for performing inspection against a **single Supplier Invoice**.
+
+Inspection shall always be **Invoice-wise**.
+
+User shall first select a Purchase Order, then select the Supplier Invoice, after which only the items belonging to that invoice shall be available for inspection.
+
+#### Workflow
+
+```text
+Select PO
+      ↓
+Select Invoice
+      ↓
+Load Invoice Items
+      ↓
+Enter Inspection Details
+      ↓
+Save Inspection
+```
 
 #### Columns
 
@@ -511,29 +706,55 @@ User-facing inspection verification screen for selecting receipt lines pending i
 | 1 | Inspection_Entry_Row_ID | Text | Mandatory | Locked | None | Unique row key. |
 | 2 | Inspection_No | Text | Optional | Locked | None | Assigned during controlled save. |
 | 3 | Inspection_Date | Date | Mandatory | Editable | None | Valid date. |
-| 4 | Financial_Year | Text | Mandatory | Locked | `FINANCIAL_YEAR_LIST` | Derived or selected from Settings. |
-| 5 | Receipt_No | Text | Mandatory | Editable | `PENDING_INSPECTION_RECEIPT_LIST` | Must exist in pending inspection receipt list. |
-| 6 | Receipt_Line_ID | Text | Mandatory | Editable | Filtered from Receipt_No | Must exist in selected receipt. |
-| 7 | PO_No | Text | Mandatory | Locked | None | Derived from receipt. |
-| 8 | RC_No | Text | Mandatory | Locked | None | Derived from receipt. |
-| 9 | Bidder_Name | Text | Mandatory | Locked | None | Derived from receipt. |
-| 10 | Distributor_Name | Text | Optional | Locked | None | Derived from receipt. |
-| 11 | Item_ID | Text | Mandatory | Locked | None | Derived from receipt. |
-| 12 | Item_Name | Text | Mandatory | Locked | None | Derived from receipt. |
-| 13 | Unit | Text | Mandatory | Locked | None | Derived from receipt. |
-| 14 | Received_Quantity | Number | Mandatory | Locked | None | Derived from receipt. |
-| 15 | Accepted_Quantity | Number | Optional | Editable | None | Numeric entry. |
-| 16 | Rejected_Quantity | Number | Optional | Editable | None | Numeric entry. |
-| 17 | Inspection_Result | Text | Mandatory | Editable | `INSPECTION_RESULT_LIST` | Must exist in Settings. |
-| 18 | Committee | Text | Optional | Editable | `COMMITTEE_LIST` | Must exist in Settings if used. |
-| 19 | Remarks | Text | Optional | Editable | None | Free text. |
-| 20 | Created_At | DateTime | Optional | Locked | None | System timestamp after save. |
-| 21 | Created_By | Text | Optional | Locked | None | System user identifier after save. |
+| 4 | Financial_Year | Text | Mandatory | Locked | `FINANCIAL_YEAR_LIST` | Derived from Inspection Date. |
+| 5 | PO_No | Text | Mandatory | Editable | `PO_LIST` | Must exist in PO Register. |
+| 6 | Invoice_No | Text | Mandatory | Editable | `PENDING_INSPECTION_RECEIPT_LIST` | Pending Inspection invoices only. |
+| 7 | Inspection_Note_No | Text | Mandatory | Editable | None | Manual entry. |
+| 8 | Inspection_Note_Date | Date | Mandatory | Editable | None | Valid date. |
+| 9 | RC_No | Text | Mandatory | Locked | None | Derived from PO. |
+| 10 | Bidder_Name | Text | Mandatory | Locked | None | Derived from PO. |
+| 11 | Distributor_Name | Text | Optional | Locked | None | Derived from PO. |
+| 12 | Item_ID | Text | Mandatory | Locked | None | Derived from Invoice. |
+| 13 | Item_Name | Text | Mandatory | Locked | None | Derived from Invoice. |
+| 14 | Make | Text | Mandatory | Locked | None | Derived from RC. |
+| 15 | Unit | Text | Mandatory | Locked | None | Derived from Receipt. |
+| 16 | Received_Quantity | Number | Mandatory | Locked | None | Derived from Receipt. |
+| 17 | Accepted_Quantity | Number | Mandatory | Editable | None | Numeric value. |
+| 18 | Rejected_Quantity | Number | Mandatory | Editable | None | Numeric value. |
+| 19 | Inspection_Result | Text | Mandatory | Editable | `INSPECTION_RESULT_LIST` | Must exist in Settings. |
+| 20 | Committee | Text | Mandatory | Locked | `COMMITTEE_LIST` | Loaded automatically from Settings. |
+| 21 | Remarks | Text | Optional | Editable | None | Free text. |
+| 22 | Created_At | DateTime | Optional | Locked | None | System timestamp after save. |
+| 23 | Created_By | Text | Optional | Locked | None | System user identifier after save. |
 
 #### Relationships
 
-- Reads pending inspection receipt lines from `Receipt_Register`.
+- Reads pending inspection invoices from `Receipt_Register`.
+- One Inspection is always linked to one Supplier Invoice.
 - Writes controlled inspection records to `Inspection_Register`.
+
+#### Validation Rules
+
+- PO selection is mandatory.
+- Invoice selection is mandatory.
+- Only Pending Inspection invoices shall be available.
+- Accepted Quantity + Rejected Quantity must equal Received Quantity.
+- Inspection Result is mandatory.
+
+#### Committee
+
+- Committee members shall be loaded automatically from `Settings`.
+- Normal users cannot modify committee members.
+- Only Administrator may update Committee members in Settings.
+
+#### Save
+
+After successful save
+
+- Receipt Inspection Status shall update automatically.
+- Inspection Register shall update automatically.
+- Inspection Note shall be available for printing.
+- Inspection may be reprinted at any time.
 
 #### Primary Key
 
@@ -549,8 +770,11 @@ Header row and entry header section.
 
 #### Protected Ranges
 
-- Derived receipt, PO, RC, bidder, distributor, and item fields.
-- Inspection number and audit fields.
+- Derived PO fields.
+- Derived Receipt fields.
+- Committee field.
+- Inspection Number.
+- Audit fields.
 
 #### Named Ranges Required
 
@@ -561,14 +785,21 @@ Header row and entry header section.
 #### Conditional Formatting Requirements
 
 - Highlight missing mandatory fields.
-- Highlight pending inspection lines.
+- Highlight pending inspection invoices.
 - Highlight rejected quantity entries.
+- Highlight partial acceptance.
 
 ### 4.6 Inspection_Register
 
 #### Purpose
 
-Authoritative locked register of saved inspection verification records.
+Authoritative locked register of completed Inspection records.
+
+Inspection Register is maintained **Invoice-wise**.
+
+One Inspection record always belongs to one Supplier Invoice.
+
+Multiple Inspection records may later be printed together in a single Inspection Note without merging the underlying records.
 
 #### Columns
 
@@ -578,32 +809,55 @@ Authoritative locked register of saved inspection verification records.
 | 2 | Inspection_No | Text | Mandatory | Locked | None | Nonblank; grouped across inspection lines. |
 | 3 | Inspection_Date | Date | Mandatory | Locked | None | Valid date. |
 | 4 | Financial_Year | Text | Mandatory | Locked | `FINANCIAL_YEAR_LIST` | Must exist in Settings. |
-| 5 | Receipt_No | Text | Mandatory | Locked | `RECEIPT_LIST` | Must exist in receipt register. |
-| 6 | Receipt_Line_ID | Text | Mandatory | Locked | None | Must exist in receipt register. |
-| 7 | PO_No | Text | Mandatory | Locked | None | Derived from receipt. |
-| 8 | RC_No | Text | Mandatory | Locked | None | Derived from receipt. |
-| 9 | Bidder_Name | Text | Mandatory | Locked | None | Derived from receipt. |
-| 10 | Distributor_Name | Text | Optional | Locked | None | Derived from receipt. |
-| 11 | Item_ID | Text | Mandatory | Locked | None | Derived from receipt. |
-| 12 | Item_Name | Text | Mandatory | Locked | None | Derived from receipt. |
-| 13 | Unit | Text | Mandatory | Locked | None | Derived from receipt. |
-| 14 | Received_Quantity | Number | Mandatory | Locked | None | Derived from receipt. |
-| 15 | Accepted_Quantity | Number | Optional | Locked | None | Numeric field. |
-| 16 | Rejected_Quantity | Number | Optional | Locked | None | Numeric field. |
-| 17 | Inspection_Result | Text | Mandatory | Locked | `INSPECTION_RESULT_LIST` | Must exist in Settings. |
-| 18 | Committee | Text | Optional | Locked | `COMMITTEE_LIST` | Must exist in Settings if used. |
-| 19 | Remarks | Text | Optional | Locked | None | Free text. |
-| 20 | Inspection_Document_Link | Text | Optional | Locked | None | Drive link or document reference. |
-| 21 | Created_At | DateTime | Mandatory | Locked | None | System timestamp. |
-| 22 | Created_By | Text | Mandatory | Locked | None | System user identifier. |
-| 23 | Updated_At | DateTime | Optional | Locked | None | System timestamp. |
-| 24 | Updated_By | Text | Optional | Locked | None | System user identifier. |
+| 5 | PO_No | Text | Mandatory | Locked | `PO_LIST` | Must exist in PO Register. |
+| 6 | Invoice_No | Text | Mandatory | Locked | `RECEIPT_LIST` | Must exist in Receipt Register. |
+| 7 | Inspection_Note_No | Text | Mandatory | Locked | None | Stored as entered. |
+| 8 | Inspection_Note_Date | Date | Mandatory | Locked | None | Valid date. |
+| 9 | RC_No | Text | Mandatory | Locked | None | Derived from PO. |
+| 10 | Bidder_Name | Text | Mandatory | Locked | None | Derived from PO. |
+| 11 | Distributor_Name | Text | Optional | Locked | None | Derived from PO. |
+| 12 | Item_ID | Text | Mandatory | Locked | None | Derived from Receipt. |
+| 13 | Item_Name | Text | Mandatory | Locked | None | Derived from Receipt. |
+| 14 | Make | Text | Mandatory | Locked | None | Derived from RC. |
+| 15 | Unit | Text | Mandatory | Locked | None | Derived from Receipt. |
+| 16 | Received_Quantity | Number | Mandatory | Locked | None | Derived from Receipt. |
+| 17 | Accepted_Quantity | Number | Mandatory | Locked | None | Stored Inspection Quantity. |
+| 18 | Rejected_Quantity | Number | Mandatory | Locked | None | Stored Inspection Quantity. |
+| 19 | Inspection_Result | Text | Mandatory | Locked | `INSPECTION_RESULT_LIST` | Must exist in Settings. |
+| 20 | Committee | Text | Mandatory | Locked | `COMMITTEE_LIST` | Loaded from Settings. |
+| 21 | Remarks | Text | Optional | Locked | None | Free text. |
+| 22 | Inspection_Document_Link | Text | Optional | Locked | None | Drive link or document reference. |
+| 23 | Created_At | DateTime | Mandatory | Locked | None | System timestamp. |
+| 24 | Created_By | Text | Mandatory | Locked | None | System user identifier. |
+| 25 | Updated_At | DateTime | Optional | Locked | None | System timestamp. |
+| 26 | Updated_By | Text | Optional | Locked | None | System user identifier. |
 
 #### Relationships
 
 - Child of `Receipt_Register`.
+- One Inspection record belongs to one Supplier Invoice.
 - Indirect child of `PO_Register` and `RC_Master`.
+- Multiple Inspection records may later be combined into a single printable Inspection Note.
 - Feeds Dashboard and Reports.
+
+#### Validation Rules
+
+- Inspection Result is mandatory.
+- Accepted Quantity + Rejected Quantity shall equal Received Quantity.
+- One Invoice shall not be inspected more than once unless reopened by Administrator.
+
+#### Inspection Note Printing
+
+- One Inspection Note may include multiple Supplier Invoices.
+- User shall manually select the invoices to include.
+- Original Inspection records shall always remain Invoice-wise.
+- Combined printing shall not merge Inspection records.
+- Inspection Notes may be reprinted at any time.
+
+#### Editing
+
+- Inspection Clerk cannot edit saved Inspection records.
+- Only Administrator may reopen or edit a saved Inspection.
 
 #### Primary Key
 
@@ -622,7 +876,10 @@ Row 1.
 
 - Entire register except controlled system-update ranges.
 - Header row.
-- Primary key, document, and audit columns.
+- Primary key.
+- Inspection Note fields.
+- Document link.
+- Audit columns.
 
 #### Named Ranges Required
 
@@ -632,21 +889,23 @@ Row 1.
 
 #### Conditional Formatting Requirements
 
-- Highlight pending inspection outcomes if any.
-- Highlight rejected quantities.
-- Highlight accepted inspection results.
-
+- Highlight pending Inspection.
+- Highlight accepted Inspection.
+- Highlight rejected Inspection.
+- Highlight partial acceptance.
 ## 5 Report Sheets
 
 ### 5.1 Dashboard
 
 #### Purpose
 
-Management dashboard containing widgets, charts, KPIs, and pending action summaries.
+Management dashboard containing real-time KPIs, widgets, charts and pending action summaries.
+
+Dashboard shall provide clickable KPI widgets that open the corresponding filtered reports.
 
 #### Columns
 
-Dashboard is a presentation sheet rather than a transaction table. The design uses defined filter cells, widget cells, chart areas, and hidden calculation helper ranges.
+Dashboard is a presentation sheet rather than a transaction table. The design uses defined filter cells, widget cells, chart areas and hidden calculation helper ranges.
 
 | Area | Data Type | Mandatory / Optional | Editable / Locked | Dropdown Source | Validation Rules |
 | --- | --- | --- | --- | --- | --- |
@@ -658,7 +917,7 @@ Dashboard is a presentation sheet rather than a transaction table. The design us
 
 #### Relationships
 
-- Reads from `PO_Register`, `Receipt_Register`, `Inspection_Register`, `RC_Master`, and `Settings`.
+- Reads from `RC_Master`, `PO_Register`, `Receipt_Register`, `Inspection_Register` and `Settings`.
 
 #### Primary Key
 
@@ -689,32 +948,50 @@ Top dashboard filter/header area.
 #### Conditional Formatting Requirements
 
 - Highlight pending action counts.
-- Highlight nearing RC expiry.
-- Highlight overdue or aging indicators where source data supports them.
+- Highlight RCs expiring within 30 days.
+- Highlight overdue deliveries.
+- Highlight pending inspections.
 
-#### Dashboard Widgets
+#### KPI Widgets
 
-- Total Purchase Orders.
-- Pending Purchase Orders.
-- Partially Received Purchase Orders.
-- Completed Purchase Orders.
-- Closed Purchase Orders.
-- Total Receipt Count.
-- Pending Inspection Count.
-- Accepted Inspection Count.
-- Rejected Inspection Count.
-- RC Expiry Alert Count.
-- RC-wise Purchase Value.
-- Bidder/Distributor-wise Purchase Value.
-- Item-wise Purchase Value.
-- Financial Year Purchase Summary.
-- Month-wise Purchase Summary.
+- Total Active RC
+- RC Expiring Within 30 Days
+- Total Purchase Orders
+- Pending Delivery Purchase Orders
+- Pending Receipt
+- Pending Inspection
+- Total Purchase Value
+- Current Financial Year Purchase Value
+
+#### Drill-down Widgets
+
+Each widget shall open the corresponding filtered report.
+
+| Dashboard Widget | Opens Report |
+|------------------|-------------|
+| Active RC | RC Register |
+| RC Expiry | RC Expiry Report |
+| Pending Delivery | Pending Delivery Report |
+| Pending Receipt | Pending Receipt Report |
+| Pending Inspection | Pending Inspection Report |
+| Supplier Purchase | Supplier-wise Purchase Report |
+| Item Purchase | Item-wise Purchase Report |
+| Purchase Summary | PO Summary Report |
+
+#### Dashboard Rules
+
+- Dashboard data shall refresh automatically.
+- Clicking a widget shall open the corresponding report with filters applied.
+- Dashboard shall display only current transaction data.
+- Dashboard shall not allow manual editing of calculated values.
 
 ### 5.2 Reports
 
 #### Purpose
 
-Central report selection, filter, and output sheet for operational and analytical reports.
+Central report selection, filter and output sheet for operational, analytical and management reports.
+
+Reports shall support on-screen viewing, printing and export.
 
 #### Columns
 
@@ -727,26 +1004,26 @@ Central report selection, filter, and output sheet for operational and analytica
 | 5 | Month | Text | Optional | Editable | `MONTH_LIST` | Must exist in Settings. |
 | 6 | Date_From | Date | Optional | Editable | None | Valid date if present. |
 | 7 | Date_To | Date | Optional | Editable | None | Valid date if present. |
-| 8 | RC_No | Text | Optional | Editable | `RC_LIST` | Must exist in RC master if selected. |
-| 9 | PO_No | Text | Optional | Editable | `PO_LIST` | Must exist in PO register if selected. |
-| 10 | Bidder | Text | Optional | Editable | `BIDDER_LIST` | Must exist in RC master if selected. |
-| 11 | Distributor | Text | Optional | Editable | `DISTRIBUTOR_LIST` | Must exist in RC master if selected. |
-| 12 | Item | Text | Optional | Editable | `ITEM_LIST` | Must exist in RC master if selected. |
-| 13 | Status | Text | Optional | Editable | `STATUS_LIST` | Must exist in Settings if selected. |
-| 14 | Output_Area | Text/Number/Date | Optional | Locked | Registers | Report output area. |
+| 8 | RC_No | Text | Optional | Editable | `RC_LIST` | Must exist in RC Master if selected. |
+| 9 | PO_No | Text | Optional | Editable | `PO_LIST` | Must exist in PO Register if selected. |
+| 10 | Bidder | Text | Optional | Editable | `BIDDER_LIST` | Must exist in RC Master if selected. |
+| 11 | Distributor | Text | Optional | Editable | `DISTRIBUTOR_LIST` | Must exist in RC Master if selected. |
+| 12 | Item | Text | Optional | Editable | `ITEM_LIST` | Must exist in RC Master if selected. |
+| 13 | Status | Text | Optional | Editable | `STATUS_LIST` | Must exist in Settings. |
+| 14 | Output_Area | Text / Number / Date | Optional | Locked | Registers | Report output area. |
 
 #### Relationships
 
-- Reads from all master and transaction registers.
-- Uses filter values from `Settings`, `RC_Master`, `PO_Register`, `Receipt_Register`, and `Inspection_Register`.
+- Reads data from `RC_Master`, `PO_Register`, `Receipt_Register`, `Inspection_Register` and `Settings`.
+- Uses filter values from Settings and transaction registers.
 
 #### Primary Key
 
-`Report_Run_ID` if report execution history is retained; otherwise not applicable.
+`Report_Run_ID` (if report execution history is retained).
 
 #### Hidden Columns
 
-Helper columns for generated report outputs and filter normalization.
+Helper columns for report generation and filter normalization.
 
 #### Freeze Rows
 
@@ -768,8 +1045,147 @@ Report filter section and output header row.
 #### Conditional Formatting Requirements
 
 - Highlight active filters.
-- Highlight report output totals.
-- Highlight status columns based on selected report type.
+- Highlight report totals.
+- Highlight status columns where applicable.
+
+---
+
+## Available Reports
+
+### Purchase Order Reports
+
+- PO Summary
+- PO Detail (Item-wise)
+
+### Supplier / Bidder Reports
+
+- Supplier-wise Purchase
+- Bidder-wise Purchase
+
+Distributor may remain blank for Direct Supply.
+
+### Item Reports
+
+- Item-wise Purchase
+- Item Pending Quantity
+- Item Supply History
+
+### Pending Reports
+
+- Pending Delivery
+- Pending Receipt
+- Pending Inspection
+
+### Rate Contract Reports
+
+- RC Register
+- RC Expiry
+- RC-wise Purchase
+
+---
+
+## Common Report Filters
+
+Every report shall support
+
+- Financial Year
+- Quarter
+- Month
+- Date Range
+- RC
+- Bidder
+- Distributor
+- Item
+- Status
+
+---
+
+## Financial Year Rule
+
+Financial Year filtering shall always use **PO Date** as the reference date.
+
+---
+
+## PO Summary Report
+
+Display
+
+- PO No
+- PO Date
+- Bidder
+- Distributor
+- RC No
+- PO Value
+- Status
+
+(Item details are not displayed.)
+
+---
+
+## PO Detail Report
+
+Display
+
+- PO No
+- PO Date
+- Bidder
+- Distributor
+- RC No
+- Item Code
+- Item Name
+- Ordered Quantity
+- Received Quantity
+- Balance Quantity
+- Rate
+- GST
+- Total Value
+
+---
+
+## Supplier / Bidder Report
+
+Display
+
+- Bidder
+- Distributor
+- RC No
+- PO No
+- Item
+- Quantity
+- Value
+
+Distributor may remain blank for Direct Supply.
+
+---
+
+## Item Report
+
+Display
+
+- Item Code
+- Item Name
+- RC No
+- PO No
+- Ordered Quantity
+- Supplied Quantity
+- Balance Quantity
+
+---
+
+## Export Options
+
+Every report shall support
+
+- Print
+- PDF
+- Excel
+
+---
+
+## Dashboard Navigation
+
+Every Dashboard widget shall open its corresponding report with the applied filters.
+
 
 ## 6 Hidden System Sheets
 
@@ -840,10 +1256,12 @@ Hidden system error log for validation, save, document generation, and automatio
 | 6 | Record_Key | Text | Optional | Locked | None | Related primary key if available. |
 | 7 | Error_Type | Text | Mandatory | Locked | `ERROR_TYPE_LIST` | Must exist in Settings. |
 | 8 | Error_Message | Text | Mandatory | Locked | None | Error message. |
-| 9 | Resolution_Status | Text | Mandatory | Locked | `ERROR_RESOLUTION_STATUS_LIST` | Must exist in Settings. |
-| 10 | Resolved_At | DateTime | Optional | Locked | None | System timestamp if resolved. |
-| 11 | Resolved_By | Text | Optional | Locked | None | System user identifier if resolved. |
-| 12 | Remarks | Text | Optional | Locked | None | Free text. |
+| 9 | Stack_Trace | Text      | System generated stack trace for debugging |
+
+| 10 | Resolution_Status | Text | Mandatory | Locked | `ERROR_RESOLUTION_STATUS_LIST` | Must exist in Settings. |
+| 11 | Resolved_At | DateTime | Optional | Locked | None | System timestamp if resolved. |
+| 12 | Resolved_By | Text | Optional | Locked | None | System user identifier if resolved. |
+| 13 | Remarks | Text | Optional | Locked | None | Free text. |
 
 #### Relationships
 
@@ -874,71 +1292,183 @@ Entire sheet.
 - Highlight unresolved errors.
 - Highlight repeated errors by module if displayed for administrators.
 
+## Global Search
+
+AIIMS Store ERP shall provide a Global Search dialog.
+
+Users shall be able to search by
+
+- RC Number
+- PO Number
+- Receipt Number
+- Inspection Number
+- Item Code
+- Item Name
+- Bidder
+- Distributor
+
+Search shall support
+
+- Partial matching
+- Case-insensitive search
+- Keyboard navigation
+
+Search results shall open the corresponding transaction.
+
 ## 7 Master Relationships
 
 ### RC
 
-`RC_Master` is the source for approved Rate Contract references, bidder details, distributor details, item details, rates, GST percentages, and active RC status.
+- One Rate Contract contains one or more approved items.
+- One Rate Contract is linked to one Bidder.
+- One Rate Contract may have one Distributor or Direct Supply.
+- Only **Active Rate Contracts** shall be available during Purchase Order creation.
+- Bidder, Distributor, Item, Make, Unit, Rate and default GST are derived from the selected RC.
 
-### PO
+---
 
-`PO_Register` is created from `PO_Entry` and is linked to exactly one `RC_No`. PO line items are derived from the selected RC item rows in `RC_Master`.
+### Purchase Order
+
+- One Purchase Order shall always be created against **exactly one Rate Contract**.
+- One Purchase Order may contain multiple items.
+- Items can be selected **only from the selected Rate Contract**.
+- One Purchase Order may receive multiple Supplier Invoices.
+- Purchase Order is the parent transaction for Receipt.
+
+---
 
 ### Receipt
 
-`Receipt_Register` is created from `Receipt_Entry` and is linked to `PO_Register` through `PO_No` and `PO_Line_ID`.
+- One Receipt shall always belong to one Purchase Order.
+- Receipt processing shall always be **Invoice-wise**.
+- User workflow:
+
+```text
+Purchase Order
+      ↓
+Supplier Invoice
+      ↓
+Invoice Items
+      ↓
+Goods Receipt
+```
+
+- Multiple Supplier Invoices are allowed against one Purchase Order until ordered quantity is exhausted.
+- Receipt is the parent transaction for Inspection.
+
+---
 
 ### Inspection
 
-`Inspection_Register` is created from `Inspection_Verification` and is linked to `Receipt_Register` through `Receipt_No` and `Receipt_Line_ID`.
+- Inspection shall always be **Invoice-wise**.
+- One Inspection belongs to one Supplier Invoice.
+- One Supplier Invoice may contain multiple inspected items.
+- Multiple Inspection records may later be printed together in a single Inspection Note.
+- Printing shall **not** merge Inspection records.
+- Inspection updates the Receipt Inspection Status automatically.
 
-### Bidder
+---
 
-Bidder values are stored in `RC_Master` and are filtered by the selected RC.
+### Bidder / Distributor
 
-### Distributor
+- Bidder is mandatory.
+- Distributor is optional.
+- Direct Supply is permitted without Distributor.
+- Bidder and Distributor are derived from the selected Rate Contract.
 
-Distributor values are stored in `RC_Master` and are filtered by the selected RC and bidder. Distributor is optional where direct supply is recorded through the supply mode.
+---
 
 ### Items
 
-Items are stored as RC-linked item rows in `RC_Master`. No standalone Item Master sheet exists.
+- Items exist only inside approved Rate Contracts.
+- No standalone Item Master shall be maintained.
+- Item search shall support:
+  - Item Code
+  - Item Name
+- Only RC-linked items shall be selectable during Purchase Order creation.
+
+---
 
 ### Settings
 
-`Settings` provides controlled dropdowns, status values, financial year values, numbering configuration, report names, and system lists used across the workbook.
+`Settings` provides
+
+- Financial Year
+- Numbering Configuration
+- Status Lists
+- GST Rates
+- Committee Members
+- Delivery Defaults
+- Consignee Defaults
+- Report Configuration
+- Validation Lists
+- Named Range Sources
+
+All modules shall use Settings as the central configuration source.
 
 ## 8 Dropdown Design
 
 ### Searchable Dropdown Relationship
 
 ```text
-RC
-  -> Bidder
-    -> Distributor (optional / Direct Supply)
-      -> Items
+Rate Contract
+      ↓
+Bidder
+      ↓
+Distributor (Optional)
+      ↓
+Purchase Order
+      ↓
+Supplier Invoice
+      ↓
+Items
 ```
 
 ### Dropdown Sources
 
 | Dropdown | Source | Filter Dependency |
 | --- | --- | --- |
-| RC | `RC_Master` active RC rows | Active RC status. |
-| Bidder | `RC_Master` bidder rows | Selected RC. |
-| Distributor | `RC_Master` distributor rows | Selected RC and bidder. |
-| Items | `RC_Master` item rows | Selected RC, bidder, and distributor or direct supply mode. |
-| PO | `PO_Register` | Open PO status where relevant. |
-| Receipt | `Receipt_Register` | Pending inspection where relevant. |
-| Status | `Settings` | Module-specific status group. |
-| Financial Year | `Settings` | Active financial year values. |
+| Rate Contract | `RC_Master` | Active RC only |
+| Bidder | `RC_Master` | Selected Rate Contract |
+| Distributor | `RC_Master` | Selected Rate Contract and Bidder |
+| Item | `RC_Master` | Selected Rate Contract |
+| Purchase Order | `PO_Register` | Open Purchase Orders |
+| Supplier Invoice | `Receipt_Register` | Selected Purchase Order |
+| Receipt | `Receipt_Register` | Pending Inspection Receipts |
+| Status | `Settings` | Module-specific Status List |
+| Financial Year | `Settings` | Active Financial Years |
+
+### Dropdown Rules
+
+- Only **Active Rate Contracts** shall appear.
+- Bidder shall be filtered based on the selected Rate Contract.
+- Distributor shall be filtered based on the selected Rate Contract and Bidder.
+- Distributor dropdown shall remain optional for Direct Supply.
+- Item dropdown shall display only items belonging to the selected Rate Contract.
+- Item dropdown shall refresh immediately after Rate Contract selection.
+- Purchase Order dropdown shall display only Open Purchase Orders.
+- Supplier Invoice dropdown shall appear only after Purchase Order selection.
+- Inspection Invoice dropdown shall display only Pending Inspection invoices.
+- Status dropdowns shall use module-specific status lists from Settings.
+- Financial Year dropdown shall display only Active Financial Years.
+
+### Search Behaviour
+
+Every searchable dropdown shall support
+
+- Typing
+- Partial search
+- Keyboard navigation
+- Mouse selection
 
 ### Searchable Dropdown Requirements
 
-- Dropdowns must support typing/searching in Google Sheets.
-- Dependent dropdowns must refresh based on the parent selection.
-- Item dropdowns must not expose items outside the selected RC relationship.
-- Direct Supply must be represented without requiring a distributor value.
-- Dropdown named ranges must be maintained from master and register sources.
+- Dropdowns shall support Google Sheets searchable dropdowns.
+- Dependent dropdowns shall refresh automatically after parent selection.
+- Item dropdown shall never display items outside the selected Rate Contract.
+- Direct Supply shall be supported without requiring Distributor selection.
+- All dropdown named ranges shall be maintained from Settings, RC_Master and transaction registers.
+
 
 ## 9 Report Filter Design
 
@@ -946,7 +1476,7 @@ RC
 
 | Filter | Source |
 | --- | --- |
-| Financial Year | `FINANCIAL_YEAR_LIST` |
+| Financial Year *(Based on PO Date)* | `FINANCIAL_YEAR_LIST` |
 | Quarter | `QUARTER_LIST` |
 | Month | `MONTH_LIST` |
 | Date Range | User-entered date cells |
@@ -957,6 +1487,14 @@ RC
 | Item | `ITEM_LIST` |
 | Status | `STATUS_LIST` |
 
+### Filter Behaviour
+
+- Multiple filters may be applied simultaneously.
+- Financial Year shall always be determined using **PO Date**.
+- Blank Distributor shall include **Direct Supply** records.
+- Reports opened from Dashboard shall automatically apply the corresponding filter.
+- Filters shall remain active until cleared or changed by the user.
+
 ### Filter Areas
 
 - Dashboard filter panel.
@@ -964,7 +1502,24 @@ RC
 - Report-specific output headers.
 - Hidden helper ranges for normalized selected filter values.
 
-## 10 Dashboard Design
+## 10 Global Business Rules
+
+1. RC is the master source for Purchase Order creation.
+2. One Purchase Order shall reference exactly one Rate Contract.
+3. Receipt processing shall always be Invoice-wise.
+4. Inspection processing shall always be Invoice-wise.
+5. Multiple Inspection records may be printed together in one Inspection Note.
+6. Inspection printing shall not merge Inspection records.
+7. GST in Rate Contract is optional.
+8. GST becomes mandatory during Receipt.
+9. Distributor is optional for Direct Supply.
+10. Receipt Clerk cannot edit saved Receipt records.
+11. Inspection Clerk cannot edit saved Inspection records.
+12. Only Administrator may reopen or edit saved transactions.
+13. Financial Year shall always be calculated using PO Date.
+14. Settings shall remain the central configuration source for all modules.
+
+## 11 Dashboard Design
 
 Only dashboard widgets are defined in this version. No formulas, charts, or implementation logic are included.
 
@@ -990,56 +1545,142 @@ Only dashboard widgets are defined in this version. No formulas, charts, or impl
 - Month-wise Purchase Trend.
 - Financial Year Purchase Summary.
 
-## 11 Report Design
+## 12 Report Design
 
 ### PO Summary
 
 Summary report of Purchase Orders by selected filters.
 
+Footer
+
+- Total Purchase Orders
+- Grand Total Value
+
 ### PO Detail
 
 Line-level Purchase Order report by selected filters.
+
+Footer
+
+- Total Quantity
+- Grand Total Value
 
 ### Receipt Register
 
 Line-level Goods Receipt report by selected filters.
 
+Footer
+
+- Total Quantity
+- Grand Total Value
 ### Inspection Register
 
 Line-level inspection report by selected filters.
 
+Footer
+
+- Total Quantity
+- Grand Total Value
 ### Pending Delivery
 
 Report of PO lines with pending balance quantity.
+
+Footer
+
+- Total Quantity
+- Grand Total Value
 
 ### Pending Inspection
 
 Report of receipt lines pending inspection.
 
+Footer
+
+- Total Quantity
+- Grand Total Value
+
 ### RC Register
 
 Register report of Rate Contract records.
+
+Footer
+
+- Total Quantity
+- Grand Total Value
 
 ### RC Expiry
 
 Report of Rate Contracts by expiry status or expiry period.
 
+Footer
+
+- Total Quantity
+- Grand Total Value
+
 ### RC-wise Purchase
 
 Purchase report grouped by Rate Contract.
+Footer
+
+- Total Quantity
+- Grand Total Value
 
 ### Bidder/Distributor-wise Purchase
 
 Purchase report grouped by bidder and distributor.
 
+Footer
+
+- Total Quantity
+- Grand Total Value
+
 ### Item-wise Purchase
 
 Purchase report grouped by item.
+
+Footer
+
+- Total Quantity
+- Grand Total Value
 
 ### Item History
 
 Item transaction history across RC, PO, receipt, and inspection records.
 
+Footer
+
+- Total Quantity
+- Grand Total Value
+
 ### Purchase Analysis
 
 Analytical purchase report using financial year, period, RC, bidder, distributor, item, and status filters.
+
+Footer
+
+- Total Quantity
+- Grand Total Value
+
+## Version History
+
+### Version 1.1
+
+- Updated RC Master structure.
+- Added Make field.
+- Made Distributor optional for Direct Supply.
+- Made GST optional in RC and PO.
+- Added Delivery Period, Delivery Address and Consignee in PO.
+- Revised Receipt workflow to PO → Invoice → Items.
+- Revised Inspection workflow to Invoice-wise inspection.
+- Added combined Inspection Note printing.
+- Expanded Dashboard KPIs.
+- Expanded operational reports.
+- Standardized report filters.
+- Added consolidated business rules.
+## Document Freeze
+
+Version 1.1 is frozen.
+
+No structural changes shall be made after coding begins.
+
+Future modifications shall be introduced only through approved change requests and version-controlled documentation.
