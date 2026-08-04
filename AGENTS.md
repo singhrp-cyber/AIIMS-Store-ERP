@@ -1,33 +1,164 @@
-# AIIMS Store ERP - AI Development Rules
+# AIIMS Store ERP - AI Agent Instructions
 
-## Source of Truth
+## Project Overview
 
-- Documentation/WorkbookDesign.md is the Single Source of Truth (SSOT).
+AIIMS Store ERP is a Google Sheets and Google Apps Script based ERP system for institutional procurement and inventory management.
 
-## Architecture
+This repository is intended for long-term production use.
 
-- Never redesign the architecture.
-- Never rename sheets.
-- Never rename columns.
-- Never change workflows without approval.
+---
 
-## Technology
+# Single Source of Truth
 
-- Google Sheets only.
-- Google Apps Script only.
-- No external database.
-- No external backend.
+The following document has the highest priority.
 
-## Coding Standards
+1. Documentation/WorkbookDesign.md
 
-- Production-ready code only.
-- No placeholder implementations.
-- Every public function must include JSDoc.
-- Keep modules small and reusable.
-- Reuse utilities before creating new functions.
+No implementation may contradict WorkbookDesign.md.
 
-## Development Rules
+If inconsistencies are found in other documents, WorkbookDesign.md always takes precedence.
 
-- Read documentation before writing code.
-- Ask before making architectural changes.
-- Preserve backward compatibility whenever possible.
+---
+
+# Documentation Priority
+
+Read documents in this order before writing code.
+
+1. AGENTS.md
+2. Documentation/WorkbookDesign.md
+3. Documentation/MasterRequirement.md
+4. Documentation/DatabaseDesign.md
+5. Documentation/Workflow.md
+6. Documentation/RepositoryReview.md
+7. Documentation/README.md
+
+---
+
+# Technology Stack
+
+Backend
+- Google Apps Script
+
+Database
+- Google Sheets
+
+Documents
+- Google Docs
+
+Storage
+- Google Drive
+
+Version Control
+- Git + GitHub
+
+No external database shall be introduced.
+
+No external backend shall be introduced.
+
+---
+
+# Architecture Rules
+
+Never redesign the architecture.
+
+Never rename:
+
+- Sheets
+- Modules
+- Columns
+- Named Ranges
+
+unless explicitly instructed.
+
+WorkbookDesign.md is authoritative.
+
+---
+
+# Coding Rules
+
+Always produce production-ready code.
+
+Never generate placeholder implementations.
+
+Avoid TODO comments unless explicitly requested.
+
+Use modular functions.
+
+Reuse utility functions wherever possible.
+
+Every public function must include JSDoc documentation.
+
+Keep functions focused and maintainable.
+
+---
+
+# Google Sheets Rules
+
+Entry sheets are editable.
+
+Register sheets are controlled by Apps Script.
+
+Never allow direct writes to register sheets except through approved services.
+
+Always preserve audit fields.
+
+---
+
+# Business Rules
+
+Never invent business rules.
+
+Never assume workflows.
+
+If a requirement is ambiguous, ask instead of guessing.
+
+---
+
+# Change Management
+
+Before changing:
+
+- architecture
+- sheet structure
+- workflow
+- database design
+
+obtain explicit approval.
+
+---
+
+# Development Workflow
+
+Understand requirements.
+
+Review WorkbookDesign.md.
+
+Review related module documentation.
+
+Implement.
+
+Self-review.
+
+Unit test.
+
+Only then continue to the next module.
+
+---
+
+# Git Rules
+
+Make small logical commits.
+
+Do not modify unrelated files.
+
+Keep commit messages meaningful.
+
+---
+
+# Response Rules
+
+Do not generate code unless requested.
+
+Explain design decisions briefly.
+
+When uncertain, ask clarifying questions before implementation.
