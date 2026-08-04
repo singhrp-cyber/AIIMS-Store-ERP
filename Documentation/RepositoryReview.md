@@ -13,6 +13,7 @@ AIIMS-Store-ERP/
   AppsScript/
     appsscript.json
     Code.gs
+    RC.gs
     Dashboard.gs
     Inspection.gs
     PO.gs
@@ -33,7 +34,8 @@ AIIMS-Store-ERP/
     Inspection_Register.md
     PO_Entry.md
     PO_Register.md
-    RC_Master.md
+    RC_Header.md
+    RC_ItemSheet.md
     README.md
     Receipt_Entry.md
     Receipt_Register.md
@@ -60,6 +62,7 @@ AIIMS-Store-ERP/
 | --- | --- |
 | `AppsScript/appsscript.json` | Apps Script manifest using the `Asia/Kolkata` timezone, V8 runtime, Stackdriver exception logging, and spreadsheet, document, and Drive file scopes. |
 | `AppsScript/Code.gs` | Application entry module comment defining future ownership for entry points, orchestration, custom menus, triggers, and workflow wiring. No executable logic exists. |
+| `AppsScript/RC.gs` | Rate Contract module defining future ownership for RC Header management, RC Item Sheet management, validation, search, extension, and lifecycle management. No workflows exist. |
 | `AppsScript/Dashboard.gs` | Dashboard module comment defining future ownership for metrics aggregation, refresh orchestration, pending actions, and indicators. No calculations exist. |
 | `AppsScript/Inspection.gs` | Inspection module comment defining future ownership for inspection validation, status updates, remarks, compliance tracking, and stock-readiness signals. No workflows exist. |
 | `AppsScript/PO.gs` | Purchase Order module comment defining future ownership for PO validation, register persistence, status lifecycle, and lookup services. No workflows exist. |
@@ -80,7 +83,8 @@ AIIMS-Store-ERP/
 | `Documentation/DatabaseDesign.md` | Database design overview for Google Sheets as the data platform, workbook module purposes, design principles, entity groups, and audit expectations. |
 | `Documentation/Workflow.md` | Workflow architecture with a Mermaid flow from rate contract master through PO, receipt, inspection, dashboard, reports, and document generation. |
 | `GoogleSheet/README.md` | Workbook architecture index listing the planned Google Sheet modules and stating that column-level implementation is deferred. |
-| `GoogleSheet/RC_Master.md` | Defines the `RC_Master` sheet as the approved rate contract and item master source. No columns or sample data exist. |
+| `GoogleSheet/RC_Header.md` | Defines the `RC_Header` sheet as the master index of approved Rate Contracts. |
+| `GoogleSheet/RC_ItemSheet.md` | Defines the dedicated RC Item Sheet structure used for each approved Rate Contract. |
 | `GoogleSheet/PO_Entry.md` | Defines the `PO_Entry` sheet as the user-facing PO input surface before validation and persistence. No columns or sample data exist. |
 | `GoogleSheet/PO_Register.md` | Defines the `PO_Register` sheet as the authoritative auditable PO transaction register. No columns or sample data exist. |
 | `GoogleSheet/Receipt_Entry.md` | Defines the `Receipt_Entry` sheet as the user-facing material receipt input surface before validation and persistence. No columns or sample data exist. |
@@ -112,7 +116,8 @@ AIIMS-Store-ERP/
 | Document generation | Boundary identified in `WordGenerator.gs` and `Templates/README.md`; implementation missing. |
 | Search | Boundary identified in `Search.gs`; implementation missing. |
 | Settings and configuration | Boundary identified in `Settings.gs` and `Settings.md`; implementation missing. |
-| Rate contract master | Boundary identified in `RC_Master.md`; implementation missing. |
+| Rate Contract Header | Boundary identified in `RC_Header.md`; implementation missing. |
+| Rate Contract Item Sheets | Boundary identified in `RC_ItemSheet.md`; implementation missing. |
 | Test data governance | Folder reserved in `TestData/`; artifacts missing. |
 
 ## Missing Modules
@@ -148,7 +153,7 @@ Potentially unnecessary files in later phases:
 
 ## Suggested Improvements
 
-- Define column schemas for `RC_Master`, `PO_Entry`, `PO_Register`, `Receipt_Entry`, `Receipt_Register`, `Inspection_Register`, `Dashboard`, and `Settings`.
+- Define column schemas for `RC_Header`, `RC_ItemSheet`, `PO_Entry`, `PO_Register`, `Receipt_Entry`, `Receipt_Register`, `Inspection_Register`, `Dashboard`, and `Settings`.
 - Add a central Apps Script constants module for sheet names, column keys, status values, and configuration keys.
 - Implement a spreadsheet access utility layer before adding workflow code.
 - Define validation rules before persistence functions so register data remains auditable.

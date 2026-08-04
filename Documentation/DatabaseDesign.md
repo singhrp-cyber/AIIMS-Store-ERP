@@ -8,7 +8,8 @@ The production data platform is Google Sheets. Each worksheet acts as a controll
 
 | Sheet | Purpose |
 | --- | --- |
-| `RC_Master` | Maintains approved rate contract and item master records. |
+| `RC_Header` | Maintains one record for each approved Rate Contract. |
+| `RC_ItemSheet` | Maintains approved item details for each Rate Contract. One dedicated sheet is created for each approved RC. |
 | `PO_Entry` | Captures purchase order input before controlled persistence. |
 | `PO_Register` | Stores approved purchase order records. |
 | `Receipt_Entry` | Captures material receipt input before controlled persistence. |
@@ -30,8 +31,10 @@ The production data platform is Google Sheets. Each worksheet acts as a controll
 
 ### Master Data
 
-- Rate contract records.
-- Vendor references.
+- Rate Contract Header records.
+- Rate Contract Item records.
+- Bidder references.
+- Distributor references.
 - Item references.
 - Unit and category definitions.
 - Valid status values.

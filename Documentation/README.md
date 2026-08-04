@@ -39,6 +39,7 @@ Phase 1 does not include:
 | --- | --- |
 | `Code.gs` | Application entry points and orchestration ownership. |
 | `Utils.gs` | Shared validation, spreadsheet, audit, and error utilities. |
+| `RC.gs` | Rate Contract workflow ownership. |
 | `PO.gs` | Purchase order workflow ownership. |
 | `Receipt.gs` | Material receipt workflow ownership. |
 | `Inspection.gs` | Inspection workflow ownership. |
@@ -52,14 +53,17 @@ Phase 1 does not include:
 
 The Google Sheet workbook is designed around these production modules:
 
-- `RC_Master`
+- `Settings`
+- `RC_Header`
+- `RC Item Sheets` (One dedicated sheet per approved Rate Contract)
 - `PO_Entry`
 - `PO_Register`
 - `Receipt_Entry`
 - `Receipt_Register`
+- `Inspection_Verification`
 - `Inspection_Register`
 - `Dashboard`
-- `Settings`
+- `Reports`
 
 Each module is documented in the `GoogleSheet` folder.
 
