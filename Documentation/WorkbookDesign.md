@@ -11,7 +11,7 @@ This document defines the production Google Spreadsheet workbook design for AIIM
 | Sheet | Purpose |
 | --- | --- |
 | `Settings` | Central configuration, dropdown values, numbering controls, financial year values, status lists, and validation sources. |
-| `RC_Master` | Approved Rate Contract, bidder, distributor, and item reference source for Purchase Orders. |
+| `RC_Header + RC Item Sheets` | Approved Rate Contract, bidder, distributor, and item reference source for Purchase Orders. |
 
 ### Transaction Sheets
 
@@ -48,7 +48,7 @@ This document defines the production Google Spreadsheet workbook design for AIIM
 - Hidden system sheets: hidden and protected.
 - Primary keys: stored in explicit ID columns.
 - Audit fields: included on all transaction registers and system logs.
-- Dropdown sources: use `Settings` and filtered lists derived from `RC_Master`.
+- Dropdown sources: use `Settings` and filtered lists derived from `RC_Header` and RC Item Sheets
 
 ## 3 Master Sheets
 
@@ -152,57 +152,41 @@ Row 1.
 - Highlight missing mandatory setting values.
 - Highlight expired setting values where `Effective_To` is before current date.
 
-### 3.2 RC_Master
+### 3.2 RC_Header
 
 #### Purpose
 
-Approved Rate Contract master containing RC, bidder, distributor, make, and item details used for Purchase Order creation. Item selection in Purchase Orders is always derived from the selected Rate Contract. No standalone Item Master sheet exists. Distributor is optional where the bidder supplies directly.
+Stores one record for each approved Rate Contract.
+
+This sheet acts as the master index of all approved Rate Contracts.
+
+Each Rate Contract shall have one dedicated Item sheet.
 
 #### Columns
 
-| Order | Column           | Data Type | Mandatory / Optional | Editable / Locked | Dropdown Source       | Validation Rules                      |
-| ----: | ---------------- | --------- | -------------------- | ----------------- | --------------------- | ------------------------------------- |
-|     1 | RC_Line_ID       | Text      | Mandatory            | Locked            | None                  | Unique line-level key.                |
-|     2 | RC_No            | Text      | Mandatory            | Editable          | None                  | Nonblank; grouped across RC lines.    |
-|     3 | RC_Date          | Date      | Mandatory            | Editable          | None                  | Valid date.                           |
-|     4 | Financial_Year   | Text      | Mandatory            | Editable          | `FINANCIAL_YEAR_LIST` | Must exist in Settings.               |
-|     5 | RC_Status        | Text      | Mandatory            | Editable          | `RC_STATUS_LIST`      | Must exist in Settings.               |
-|     6 | Bidder_ID        | Text      | Mandatory            | Editable          | None                  | Nonblank.                             |
-|     7 | Bidder_Name      | Text      | Mandatory            | Editable          | None                  | Nonblank.                             |
-|     8 | Distributor_ID   | Text      | Optional             | Editable          | None                  | Optional for Direct Supply.           |
-|     9 | Distributor_Name | Text      | Optional             | Editable          | None                  | Optional for Direct Supply.           |
-|    10 | Supply_Mode      | Text      | Mandatory            | Editable          | `SUPPLY_MODE_LIST`    | Direct Supply / Through Distributor.  |
-|    11 | Item_ID          | Text      | Mandatory            | Editable          | None                  | Unique within RC.                     |
-|    12 | Item_Name        | Text      | Mandatory            | Editable          | None                  | Nonblank.                             |
-|    13 | Item_Description | Text      | Optional             | Editable          | None                  | Free text.                            |
-|    14 | Make             | Text      | Mandatory            | Editable          | None                  | Manufacturer / Brand.                 |
-|    15 | Unit             | Text      | Optional             | Editable          | `UNIT_LIST`           | If specified, must exist in Settings. |
-|    16 | Category         | Text      | Optional             | Editable          | `ITEM_CATEGORY_LIST`  | Must exist in Settings if used.       |
-|    17 | Rate             | Number    | Mandatory            | Editable          | None                  | ≥ 0                                   |
-|    18 | GST_Percent      | Number    | Optional             | Editable          | `GST_RATE_LIST`       | If specified, must exist in Settings. |
-|    19 | RC_Start_Date    | Date      | Mandatory            | Editable          | None                  | Valid date.                           |
-|    20 | RC_End_Date      | Date      | Mandatory            | Editable          | None                  | Valid date.                           |
-|    21 | RC_Document_Ref  | Text      | Optional             | Editable          | None                  | Document reference / Drive link.      |
-|    22 | Active           | Boolean   | Mandatory            | Editable          | `TRUE_FALSE_LIST`     | TRUE/FALSE                            |
-|    23 | Remarks          | Text      | Optional             | Editable          | None                  | Free text.                            |
-|    24 | Created_At       | DateTime  | Mandatory            | Locked            | None                  | System timestamp.                     |
-|    25 | Created_By       | Text      | Mandatory            | Locked            | None                  | System user identifier.               |
-|    26 | Updated_At       | DateTime  | Optional             | Locked            | None                  | System timestamp.                     |
-|    27 | Updated_By       | Text      | Optional             | Locked            | None                  | System user identifier.               |
-
+| Order | Column | Data Type | Mandatory / Optional | Editable / Locked | Validation Rules |
+| --- | --- | --- | --- | --- | --- |
+| 1 | RC_No | Text | Mandatory | Editable | Unique Rate Contract Number. |
+| 2 | RC_Name | Text | Mandatory | Editable | Nonblank. |
+| 3 | Sheet_Name | Text | Mandatory | Locked | Unique Google Sheet name for RC Item Sheet. |
+| 4 | RC_Date | Date | Mandatory | Editable | Valid date. |
+| 5 | Start_Date | Date | Mandatory | Editable | Valid date. |
+| 6 | End_Date | Date | Mandatory | Editable | End Date shall be greater than or equal to Start Date. |
+| 7 | Status | Text | Mandatory | Editable | Active / Expired / Closed. |
+| 8 | Total_Items | Number | Locked | Locked | Auto calculated. |
+| 9 | Total_Bidders | Number | Locked | Locked | Auto calculated. |
+| 10 | Document_Ref | Text | Optional | Editable | Office file reference or Drive link. |
+| 11 | Remarks | Text | Optional | Editable | Free text. |
 
 #### Relationships
 
+- Parent of RC Item Sheet.
 - Parent source for Purchase Orders.
-- One RC may contain multiple items.
-- Bidder and Distributor are derived from the selected RC.
-- Distributor may remain blank when Supply Mode is Direct Supply.
-- Item search shall support both Item_ID and Item_Name.
-
+- One Header record corresponds to one dedicated RC Item Sheet.
 
 #### Primary Key
 
-`RC_Line_ID`
+`RC_No`
 
 #### Hidden Columns
 
@@ -215,26 +199,81 @@ Row 1.
 #### Protected Ranges
 
 - Header row.
-- Primary key column.
-- Audit columns.
-- Locked historical RC rows after approval.
+- Auto calculated columns.
 
 #### Named Ranges Required
 
-- `RC_MASTER_TABLE`
-- `RC_LIST`
 - `ACTIVE_RC_LIST`
-- `RC_BIDDER_LIST`
-- `RC_DISTRIBUTOR_LIST`
-- `RC_ITEM_LIST`
-- `RC_ITEM_RATE_LIST`
+- `RC_HEADER_TABLE`
 
 #### Conditional Formatting Requirements
 
-- Highlight inactive RC rows.
+- Highlight Active RC.
 - Highlight RCs nearing expiry.
-- Highlight expired RCs.
-- Highlight missing mandatory fields.
+- Highlight Expired RCs.
+
+
+### 3.3 RC_Item_Sheet
+
+#### Purpose
+
+Stores all approved items belonging to one Rate Contract.
+
+Each Rate Contract shall have one dedicated Item Sheet.
+
+The sheet name shall be mapped from `RC_Header`.
+
+#### Columns
+
+| Order | Column | Data Type | Mandatory / Optional | Editable / Locked | Validation Rules |
+| --- | --- | --- | --- | --- | --- |
+| 1 | RC_No | Text | Mandatory | Locked | Must exist in `RC_Header`. |
+| 2 | Item_Code | Text | Mandatory | Editable | Unique within the selected RC. |
+| 3 | Item_Name | Text | Mandatory | Editable | Nonblank. |
+| 4 | Item_Specification | Text | Mandatory | Editable | Technical specification of the item. |
+| 5 | UOM | Text | Mandatory | Editable | Unit of Measurement. |
+| 6 | Make | Text | Optional | Editable | Manufacturer / Brand. |
+| 7 | Rate | Number | Mandatory | Editable | Greater than zero. |
+| 8 | GST | Number | Optional | Editable | GST percentage if applicable. |
+| 9 | Bidder_Name | Text | Mandatory | Editable | Approved Bidder Name. |
+| 10 | Distributor_Name | Text | Optional | Editable | Optional. |
+
+#### Relationships
+
+- Child of `RC_Header`.
+- Parent source for `PO_Entry`.
+- One RC Item Sheet belongs to exactly one Rate Contract.
+
+#### Primary Key
+
+Composite Key
+
+`RC_No + Item_Code`
+
+#### Hidden Columns
+
+None.
+
+#### Freeze Rows
+
+Row 1.
+
+#### Protected Ranges
+
+- Header row.
+- RC_No column.
+
+#### Named Ranges Required
+
+- `RC_ITEM_TABLE`
+
+#### Conditional Formatting Requirements
+
+- Highlight duplicate Item Codes.
+- Highlight blank mandatory fields.
+- Highlight zero or negative Rates.
+- Highlight duplicate Bidder and Item combinations where applicable.
+
 
 ## 4 Transaction Sheets
 
@@ -246,7 +285,9 @@ User-facing Purchase Order entry screen for creating a Purchase Order against on
 
 PO Number and PO Date are entered manually.
 
-Bidder, Distributor, Item, Make, Unit and Rate are derived from the selected RC.
+Item is selected from the dedicated RC Item Sheet.
+
+Bidder, Distributor, Make, Unit, Rate and GST are automatically derived from the selected Item.
 
 Delivery Period, Delivery Address and Consignee are automatically loaded from Settings but remain editable before save.
 
@@ -287,7 +328,8 @@ GST is optional in the Purchase Order and is derived from the selected RC.
 
 #### Relationships
 
-- Reads RC, Bidder, Distributor, Item, Make, Unit, Rate and GST from `RC_Master`.
+- Reads Rate Contract details from `RC_Header`.
+- Reads Item details from the corresponding RC Item Sheet.
 - Writes controlled records to `PO_Register`.
 
 #### Validation Rules
@@ -380,7 +422,8 @@ Authoritative locked register of saved Purchase Orders and line items.
 
 #### Relationships
 
-- Child of `RC_Master`.
+- Child of `RC_Header`.
+- Item details originate from the corresponding RC Item Sheet.
 - Parent source for `Receipt_Entry` and `Receipt_Register`.
 - One Purchase Order shall reference exactly one RC.
 - One Purchase Order may contain multiple items.
@@ -836,7 +879,7 @@ Multiple Inspection records may later be printed together in a single Inspection
 
 - Child of `Receipt_Register`.
 - One Inspection record belongs to one Supplier Invoice.
-- Indirect child of `PO_Register` and `RC_Master`.
+- Indirect child of `PO_Register` and `RC_Header`.
 - Multiple Inspection records may later be combined into a single printable Inspection Note.
 - Feeds Dashboard and Reports.
 
@@ -917,7 +960,7 @@ Dashboard is a presentation sheet rather than a transaction table. The design us
 
 #### Relationships
 
-- Reads from `RC_Master`, `PO_Register`, `Receipt_Register`, `Inspection_Register` and `Settings`.
+- Reads from `RC_Header`, RC Item Sheets, `PO_Register`, `Receipt_Register`, `Inspection_Register` and `Settings`.
 
 #### Primary Key
 
@@ -1014,7 +1057,7 @@ Reports shall support on-screen viewing, printing and export.
 
 #### Relationships
 
-- Reads data from `RC_Master`, `PO_Register`, `Receipt_Register`, `Inspection_Register` and `Settings`.
+- Reads data from `RC_Header`, RC Item Sheets, `PO_Register`, `Receipt_Register`, `Inspection_Register` and `Settings`.
 - Uses filter values from Settings and transaction registers.
 
 #### Primary Key
@@ -1319,11 +1362,12 @@ Search results shall open the corresponding transaction.
 
 ### RC
 
-- One Rate Contract contains one or more approved items.
-- One Rate Contract is linked to one Bidder.
-- One Rate Contract may have one Distributor or Direct Supply.
-- Only **Active Rate Contracts** shall be available during Purchase Order creation.
-- Bidder, Distributor, Item, Make, Unit, Rate and default GST are derived from the selected RC.
+- One Rate Contract has one Header record.
+- One Rate Contract has one dedicated RC Item Sheet.
+- RC_Header stores common Rate Contract information.
+- RC Item Sheet stores Item, Bidder, Distributor, Make, Rate and GST information.
+- Only Active Rate Contracts shall be available during Purchase Order creation.
+- Item selection loads Bidder, Distributor, Make, Rate and GST automatically.
 
 ---
 
@@ -1410,28 +1454,24 @@ All modules shall use Settings as the central configuration source.
 
 ### Searchable Dropdown Relationship
 
-```text
 Rate Contract
+      ↓
+RC Item Sheet
+      ↓
+Item
       ↓
 Bidder
       ↓
 Distributor (Optional)
-      ↓
-Purchase Order
-      ↓
-Supplier Invoice
-      ↓
-Items
-```
+
 
 ### Dropdown Sources
-
-| Dropdown | Source | Filter Dependency |
-| --- | --- | --- |
-| Rate Contract | `RC_Master` | Active RC only |
-| Bidder | `RC_Master` | Selected Rate Contract |
-| Distributor | `RC_Master` | Selected Rate Contract and Bidder |
-| Item | `RC_Master` | Selected Rate Contract |
+| Dropdown      | Source        | Filter Dependency      |
+| ------------- | ------------- | ---------------------- |
+| Rate Contract | `RC_Header`   | Active RC only         |
+| Item          | RC Item Sheet | Selected Rate Contract |
+| Bidder        | RC Item Sheet | Selected Item          |
+| Distributor   | RC Item Sheet | Selected Bidder        |
 | Purchase Order | `PO_Register` | Open Purchase Orders |
 | Supplier Invoice | `Receipt_Register` | Selected Purchase Order |
 | Receipt | `Receipt_Register` | Pending Inspection Receipts |
@@ -1439,13 +1479,12 @@ Items
 | Financial Year | `Settings` | Active Financial Years |
 
 ### Dropdown Rules
-
-- Only **Active Rate Contracts** shall appear.
-- Bidder shall be filtered based on the selected Rate Contract.
-- Distributor shall be filtered based on the selected Rate Contract and Bidder.
-- Distributor dropdown shall remain optional for Direct Supply.
+- Only Active Rate Contracts shall appear.
+- Selecting a Rate Contract shall load its dedicated RC Item Sheet.
 - Item dropdown shall display only items belonging to the selected Rate Contract.
-- Item dropdown shall refresh immediately after Rate Contract selection.
+- Selecting an Item shall automatically load Bidder.
+- Distributor shall be loaded automatically where applicable.
+- Direct Supply shall not require Distributor.
 - Purchase Order dropdown shall display only Open Purchase Orders.
 - Supplier Invoice dropdown shall appear only after Purchase Order selection.
 - Inspection Invoice dropdown shall display only Pending Inspection invoices.
@@ -1467,7 +1506,7 @@ Every searchable dropdown shall support
 - Dependent dropdowns shall refresh automatically after parent selection.
 - Item dropdown shall never display items outside the selected Rate Contract.
 - Direct Supply shall be supported without requiring Distributor selection.
-- All dropdown named ranges shall be maintained from Settings, RC_Master and transaction registers.
+- All dropdown named ranges shall be maintained from Settings, RC_Header, RC Item Sheets, and transaction registers.
 
 
 ## 9 Report Filter Design
