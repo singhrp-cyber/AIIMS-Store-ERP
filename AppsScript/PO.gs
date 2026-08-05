@@ -389,9 +389,99 @@ const PO = (function() {
         }
       }
 
-      if (!found) throw new Error(`Item '${itemCode}' not found in Purchase Order '${poNo}'.`);
+            if (!found) throw new Error(`Item '${itemCode}' not found in Purchase Order '${poNo}'.`);
+      return true;
+    },
+
+    /**
+     * Internal System API: Reverses a previously applied receipt.
+     * Used exclusively for compensating transactions during a rollback.
+     * Must never be called directly by UI modules.
+     *
+     * @param {string} poNo
+     * @param {string} itemCode
+     * @param {number} receivedQty
+     * @returns {boolean}
+     */
+    reverseReceipt: function(poNo, itemCode, receivedQty) {
+      if (!poNo || !itemCode || typeof receivedQty !== 'number' || receivedQty <= 0) {
+        throw new Error("Invalid parameters for reverseReceipt.");
+      }
+
+      const sheet = Utils.getSheet(REGISTER_SHEET_NAME);
+      const data = sheet.getDataRange().getValues();
+      const headers = data[0];
+
+      const poNoIdx = headers.indexOf('PO_No');
+      const itemIdx = headers.indexOf('Item_ID');
+      const orderedQtyIdx = headers.indexOf('Ordered_Quantity');
+      const receivedQtyIdx = headers.indexOf('Received_Quantity');
+      const balanceQtyIdx = headers.indexOf('Balance_Quantity');
+      const statusIdx = headers.indexOf('PO_Status');
+      const updatedByIdx = headers.indexOf('Updated_By');
+      const updatedAtIdx = headers.indexOf('Updated_At');
+
+      const validStatuses = Settings.getActiveSettingsByGroup('PO_STATUS_LIST').map(s => s.Setting_Value);
+
+      if (!validStatuses.includes('Pending') ||
+          !validStatuses.includes('Partial') ||
+          !validStatuses.includes('Completed') ||
+          !validStatuses.includes('Closed')) {
+        throw new Error("PO_STATUS_LIST is misconfigured.");
+      }
+
+      const currentUser = Session.getActiveUser().getEmail();
+      const now = new Date();
+
+      let found = false;
+
+      for (let i = 1; i < data.length; i++) {
+
+        if (data[i][poNoIdx] === poNo && data[i][itemIdx] === itemCode) {
+
+          if (data[i][statusIdx] === 'Closed') {
+            throw new Error(`Cannot reverse receipt: Purchase Order '${poNo}' is Closed.`);
+          }
+
+          const orderedQty = Number(data[i][orderedQtyIdx]);
+          const currentReceived = Number(data[i][receivedQtyIdx]);
+
+          const newReceived = currentReceived - receivedQty;
+
+          if (newReceived < 0) {
+            throw new Error("Rollback violation.");
+          }
+
+          const newBalance = orderedQty - newReceived;
+
+          let newStatus = 'Pending';
+
+          if (newBalance === 0) {
+            newStatus = 'Completed';
+          } else if (newReceived > 0) {
+            newStatus = 'Partial';
+          }
+
+          data[i][receivedQtyIdx] = newReceived;
+          data[i][balanceQtyIdx] = newBalance;
+          data[i][statusIdx] = newStatus;
+          data[i][updatedByIdx] = currentUser;
+          data[i][updatedAtIdx] = now;
+
+          sheet.getRange(i + 1, 1, 1, data[i].length).setValues([data[i]]);
+
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        throw new Error(`Item '${itemCode}' not found in Purchase Order '${poNo}'.`);
+      }
+
       return true;
     }
+
   };
 
 })();
