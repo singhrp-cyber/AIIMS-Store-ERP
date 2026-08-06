@@ -460,7 +460,7 @@ const WorkbookBuilder = (function() {
 
       const rowsToInsert = [];
       const now = new Date();
-      const user = Session.getActiveUser().getEmail();
+      const user = "SYSTEM";
 
       // Map seed data to the exact header structure
       WorkbookConfig.SETTINGS_SEED.forEach(seed => {
